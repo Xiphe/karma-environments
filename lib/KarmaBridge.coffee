@@ -275,7 +275,7 @@ class KarmaBridge extends Base
     #* This will be the first set to kick off the tests.
     if @launcher.areAllCaptured()
       @runAll().catch (error) =>
-        @logger.error error.message || error
+        @logger.error error.toString() || error
         @launcher.kill ->
           process.exit(1)
 

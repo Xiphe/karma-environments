@@ -1,17 +1,26 @@
 describe 'environment controller', ->
   di                    = require 'di'
+  path                  = require 'path'
   KarmaEnvironment      = require lib 'KarmaEnvironment'
   EnvironmentController = require lib 'EnvironmentController'
 
-  i = 1
+  fakeI = 0
   injector = null
 
   afterEach ->
-    i = 1
+    fakeI = 0
+
+  fakeDefinitions = [
+    '/tmp/foo/.karma.env.js'
+    '/tmp/foo/bar/.karma.env.js'
+    '/tmp/foo/bar/baz/.karma.env.js'
+  ]
 
   fakeEnv = (name = 'FakeEnv') ->
     env = injector.instantiate KarmaEnvironment
-    env.name = "#{name}#{i++}"
+    env._definitionFile = fakeDefinitions[fakeI]
+    env._basePath = path.dirname env._definitionFile
+    env.name = "#{name}#{++fakeI}"
     env.run = sinon.spy()
     env._tests = ['foo']
     env
@@ -131,3 +140,11 @@ describe 'environment controller', ->
         for i in [1..2]
           expect(envCtrl.environments[i]._active).to.equal false
         expect(envCtrl.environments[0]._active).to.equal true
+
+      it 'should not get parents if there are no parents', ->
+        expect(envCtrl.getParentOf('/foo/.karma.env.js')).to.equal false
+
+      it 'should get the parent environments', ->
+        setupFakeEnvironments()
+        expect(envCtrl.getParentOf(fakeDefinitions[1])).to.deep.equal envCtrl.environments[0]
+        expect(envCtrl.getParentOf(fakeDefinitions[2])).to.deep.equal envCtrl.environments[1]

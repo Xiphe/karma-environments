@@ -60,6 +60,14 @@ describe 'karma environment', ->
         karmaEnv._active = 'def'
         expect(karmaEnv.isActive()).to.equal 'def'
 
+      it 'should have a frameworks getter', ->
+        karmaEnv._frameworks = ['a']
+        expect(karmaEnv.getFrameworks()).to.deep.equal ['a']
+
+      it 'should have an environment getter', ->
+        karmaEnv._environment = ['b', 'c']
+        expect(karmaEnv.getEnvironment()).to.deep.equal ['b', 'c']
+
     describe 'run', ->
       runner = null
 
@@ -93,19 +101,50 @@ describe 'karma environment', ->
 
     describe 'hasFile', ->
       it 'should return false if file is not present in tests and env', ->
-        expect(karmaEnv.hasFile('foo.js')).to.equal false
+        expect(karmaEnv.hasFile 'foo.js').to.equal false
 
       it 'should return true if file is present in tests', ->
         karmaEnv._tests = ['foo.js']
-        expect(karmaEnv.hasFile('foo.js')).to.equal true
+        expect(karmaEnv.hasFile 'foo.js').to.equal true
 
       it 'should return true if file is present in tests', ->
         karmaEnv._environment = ['foo.js']
-        expect(karmaEnv.hasFile('foo.js')).to.equal true
+        expect(karmaEnv.hasFile 'foo.js').to.equal true
+
+    describe 'addParent', ->
+      it 'should add parent', ->
+        parent = 'a'
+        karmaEnv.addParent parent
+        expect(karmaEnv._parent).to.equal parent
+
+    describe 'isParentOf', ->
+      it 'should recognize its childs', ->
+        karmaEnv._basePath = '/foo'
+        expect(karmaEnv.isParentOf '/foo/bar/.karma.env.js').to.equal true
+
+      it 'should return false for non childs', ->
+        karmaEnv._basePath = '/foo'
+        expect(karmaEnv.isParentOf '/bar/.karma.env.js').to.equal false
+
+      it 'should not be its own parent', ->
+        definition = '/foo/.karma.env.js'
+        karmaEnv._definitionFile = definition
+        karmaEnv._basePath = '/foo'
+        expect(karmaEnv.isParentOf definition).to.equal false
+
+    describe 'ready', ->
+      it 'should return a promise', ->
+        expect(karmaEnv.ready().then).to.be.instanceof Function
+
+      it 'it should execute a callback when ready', (done) ->
+        karmaEnv.ready done
+        karmaEnv._call = sinon.spy()
+        karmaEnv._searchTests = sinon.spy()
+        karmaEnv._load()
 
     describe '_ucfirst', ->
       it 'should capitalize the first letter of a string', ->
-        expect(karmaEnv._ucfirst('foo bar')).to.equal 'Foo bar'
+        expect(karmaEnv._ucfirst 'foo bar').to.equal 'Foo bar'
 
     describe '_load', ->
       beforeEach ->
@@ -122,6 +161,15 @@ describe 'karma environment', ->
         karmaEnv._load().then ->
           expect(karmaEnv._searchTests).to.have.been.called
           done()
+
+      it 'should call _call', ->
+        karmaEnv._load().then ->
+          expect(karmaEnv._call).to.have.been.called
+          done()
+
+      it "should resolve it's ready deferred", (done) ->
+        karmaEnv._readyDeferred.promise.then -> done()
+        karmaEnv._load()
 
     describe '_searchTests', ->
       it 'should disable itself if we do not search tests', ->
@@ -230,6 +278,34 @@ describe 'karma environment', ->
         expect(fail).to.have.been.called
         expect(fail.getCall(0).args[0].message).to.equal 'fu'
 
+    describe '_inherit', ->
+      parent = null
+
+      beforeEach ->
+        parent = injector.instantiate KarmaEnvironment
+        parent._readyDeferred.resolve()
+        karmaEnv._parent = parent
+
+      it 'should wait for parent environment to be ready', ->
+        parent.ready = sinon.spy()
+        karmaEnv._inherit()
+        expect(parent.ready).to.have.been.called
+
+      it 'should quick return if no parent is present', ->
+        karmaEnv._parent = false
+        expect(karmaEnv._inherit()).not.to.exists
+
+      it 'should copy frameworks of parent', ->
+        karmaEnv._frameworks = ['lorem']
+        karmaEnv._inherit()
+        expect(karmaEnv._frameworks).to.deep.equal ['lorem']
+
+      it 'should copy environment of parent', ->
+        karmaEnv._environment = ['ipsum']
+        karmaEnv._inherit()
+        expect(karmaEnv._environment).to.deep.equal ['ipsum']
+
+
     describe '_addFile', ->
       beforeEach ->
         karmaEnv._getFirstExistant = sinon.stub().returns Q.all []
@@ -284,6 +360,7 @@ describe 'karma environment', ->
           fixture = foo
         karmaEnv._call func
         expect(fixture).to.equal 'bar'
+
 
     describe '_prepareCallInjections', ->
       d = null

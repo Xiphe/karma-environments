@@ -1,0 +1,3 @@
+window.lib = {
+  thing: function() {}
+}

@@ -108,12 +108,25 @@ class KarmaEnvironment extends Base
     @_name = ''
 
     ###*
+     * List of parent environments
+     * Set in addParents
+     * @type {Array}
+    ###
+    @_parent = false
+
+    ###*
      * All test files
      * Disable by setting _dontSearchTests to true
      * Auto-searched using config.environments.tests
      * @type {Array}
     ###
     @_tests = []
+
+    ###*
+     * Ready deferred
+     * @type {Object}
+    ###
+    @_readyDeferred = Q.defer()
 
 
   ###*
@@ -234,6 +247,33 @@ class KarmaEnvironment extends Base
     @_load()
 
   ###*
+   * Add a parent environment for later inheritance
+   * @param {Object} environment
+  ###
+  addParent: (environment) ->
+    @_parent = environment
+
+  ###*
+   * Check if this is a parent of given path
+   * @param  {String}  definition
+   * @return {Boolean}
+  ###
+  isParentOf: (definition) ->
+    @_definitionFile != definition &&
+      definition.indexOf(@_basePath) == 0
+
+  ###*
+   * Add a ready callback or get the promise
+   * @param  {Function} callback
+   * @return {Object}            promise
+  ###
+  ready: (callback) ->
+    if callback instanceof Function
+      @_readyDeferred.promise.then callback
+
+    @_readyDeferred.promise
+
+  ###*
    * Check if this environment has focus
    * @return {Boolean}
   ###
@@ -246,6 +286,20 @@ class KarmaEnvironment extends Base
   ###
   getAmountOfTests: ->
     @_tests.length
+
+  ###*
+   * Get used Frameworks
+   * @return {Array}
+  ###
+  getFrameworks: ->
+    @_frameworks
+
+  ###*
+   * Get the environment
+   * @return {Array}
+  ###
+  getEnvironment: ->
+    @_environment
 
   ###*
    * Check if this environment is active
@@ -418,6 +472,18 @@ class KarmaEnvironment extends Base
     }
 
   ###*
+   * Wait for parent environment to be ready and
+   * copy used frameworks and environment
+   * @return {void}
+  ###
+  _inherit: =>
+    return if !@_parent
+
+    @_parent.ready =>
+      @_frameworks = @_parent.getFrameworks()
+      @_environment = @_parent.getEnvironment()
+
+  ###*
    * Create a new instance of our DSL object casting on a new queue
    * @param  {Array} queue definition steps go here
    * @return {Object}      DSL instance
@@ -448,9 +514,12 @@ class KarmaEnvironment extends Base
   ###
   _load: ->
     @_runQueue [
+      @_inherit
       => @_call require(@_definitionFile), @_name
       => @_searchTests()
+      => @_readyDeferred.resolve()
     ]
+    @_readyDeferred.promise
 
   ###*
    * Search for test-files that use this environment.

@@ -68,7 +68,7 @@ Environment Definition Files
 * A New environment is created by adding a new directory containing a file that
   matches with `config.environments.definitions` inside config.basePath.
 
-* __NOT IMPLEMENTED__ An environment inherits frameworks and dependencies from its parents.
+* An environment inherits frameworks and dependencies from its parents.
   (unless you `.clean()`)
 
 * It searches for test files matching `config.environments.tests` in its directory
@@ -130,6 +130,10 @@ module.exports = function(environment, done, error) {
 
 ```
 
+### Further Examples
+
+See [example tests](https://github.com/Xiphe/karma-environments/tree/master/test/example).
+
 
 Shout Out
 ---------
@@ -175,11 +179,14 @@ Issues, Discussion and PR are welcome.
 Todo
 ----
 
- * Inheritance
  * Normalize internal method naming
  * Custom DSL Methods
  * Customizable Path helper
+ * Update to Karma 12
+ * Travis etc
+ * Check actuality of dependencies
  * Banner Definitions
+
 
 License
 -------

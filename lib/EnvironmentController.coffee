@@ -1,6 +1,7 @@
 KarmaEnvironment = require './KarmaEnvironment'
 Base             = require './Base'
 glob             = require 'glob'
+path             = require 'path'
 Q                = require 'Q'
 
 ###*
@@ -54,7 +55,6 @@ class EnvironmentController extends Base
 
     queue = [
       @findEnvironmentDefinitions
-      # => @logger.debug 'Found definitions', @environmentDefinitions
       @sortDefinitions
       @initEnvironments
       @handleFocus
@@ -80,7 +80,7 @@ class EnvironmentController extends Base
           d.reject new Error(error)
         else
           for file in files
-            @environmentDefinitions.push("#{@config.basePath}/#{file}")
+            @environmentDefinitions.push path.join @config.basePath, file
           d.resolve()
 
     Q.all promises
@@ -108,10 +108,22 @@ class EnvironmentController extends Base
     initiationPromises = []
     for definition in @environmentDefinitions
       environment = @injector.instantiate KarmaEnvironment
+      environment.addParent @getParentOf definition
       initiationPromises.push environment.initWithDefinition definition
       @environments.push environment
 
     Q.all initiationPromises
+
+  ###*
+   * Get parent environment of a environment definition
+   * @param  {String} definition definition path
+   * @return {Object|void}
+  ###
+  getParentOf: (definition) ->
+    filtered = @environments.filter (environment) ->
+      environment.isParentOf(definition)
+
+    return if filtered.length then filtered[filtered.length - 1] else false
 
   ###*
    * Disable unfocused environments if any is focused
