@@ -6,9 +6,9 @@ module.exports = function(environment) {
     })
     .call(function(done, environment) {
       setTimeout(function() {
-        environment.add('anotherLib.js');
+        environment.lib('another');
         done();
       }, 100);
     })
-    .add('sampleLib.js');
+    .lib('sample');
 };

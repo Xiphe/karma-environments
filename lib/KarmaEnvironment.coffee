@@ -7,6 +7,7 @@ fs        = require 'fs'
 di        = require 'di'
 di_parse  = require('../node_modules/di/lib/annotation').parse
 Q         = require 'Q'
+_         = require 'lodash'
 
 ###*
  * This methods will be exposed into environment definitions.
@@ -413,9 +414,10 @@ class KarmaEnvironment extends Base
    * dependencies
    * @param  {Function} funct
    * @param  {String}   name
-   * @return {Object}         promise
+   * @param  {Object}   additional optional additional arguments for injection
+   * @return {Object}              promise
   ###
-  _call: (funct, name) ->
+  _call: (funct, name, additional = {}) ->
     d = Q.defer()
 
     if funct not instanceof Function
@@ -428,7 +430,7 @@ class KarmaEnvironment extends Base
       d.reject new Error "Executing '#{name}' without arguments, why u no like 'environment'?"
     else
       #* Ok, we have arguments prepare dependency injection
-      injections = @_prepareCallInjections args, d, name
+      injections = @_prepareCallInjections args, d, name, additional
       if injections
         injector = new di.Injector [injections]
         injector.invoke funct
@@ -437,12 +439,13 @@ class KarmaEnvironment extends Base
 
   ###*
    * Validate arguments and build an object we can inject into the call
-   * @param  {Array}  args    the arguments of the call
-   * @param  {Object} d       deferred object, we can reject on
-   * @param  {String} name    the name of the call
-   * @return {Object|Boolean} injection object or false on error
+   * @param  {Array}  args       the arguments of the call
+   * @param  {Object} d          deferred object, we can reject on
+   * @param  {String} name       the name of the call
+   * @param  {Object} additional optional additional arguments for injection
+   * @return {Object|Boolean}    injection object or false on error
   ###
-  _prepareCallInjections: (args, d, name) ->
+  _prepareCallInjections: (args, d, name, additional = {}) ->
     queue = []
     async = 'done' in args
 
@@ -465,11 +468,10 @@ class KarmaEnvironment extends Base
       error new Error "Timed out while waiting for done() to be called in '#{name}'"
     , @config.environments.asyncTimeout
 
-    return {
+    return _.extend additional,
       environment: ['value', @_newDsl(queue)]
       error: ['value', error]
       done: ['value', done]
-    }
 
   ###*
    * Wait for parent environment to be ready and
@@ -497,6 +499,16 @@ class KarmaEnvironment extends Base
         queue.push =>
           @["dsl#{@_ucfirst(method)}"].apply @, args
         dsl
+
+    #* Check for custom methods and append them
+    if typeof @config.environments.customMethods == 'object'
+      _.each @config.environments.customMethods, (method, name) =>
+        subI = 0
+        dsl[name] = =>
+          args = arguments
+          queue.push =>
+            @_call method, "#{@_name}:#{name}##{subI++}", args: ['value', args]
+          dsl
 
     dsl
 

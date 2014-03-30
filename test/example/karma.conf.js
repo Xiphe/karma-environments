@@ -8,6 +8,7 @@ module.exports = function(config) {
   var basepath = path.dirname(path.dirname(__dirname));
   var environmentPlugin = path.join(basepath, 'lib/index.coffee');
 
+
   config.set({
 
     // base path, that will be used to resolve files and exclude
@@ -23,7 +24,13 @@ module.exports = function(config) {
 
     environments: {
       tests: ['*Spec.+(coffee|js)', 'test.*.+(js|coffee)'],
-      definitions: ['**/.karma.env.+(js|coffee)']
+      definitions: ['**/.karma.env.+(js|coffee)'],
+      customMethods: {
+        lib: function(environment, args, done) {
+            environment.add(args[0] + 'Lib.js');
+            setTimeout(done, 100);
+        }
+      }
     },
 
     // list of files to exclude

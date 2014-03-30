@@ -460,6 +460,59 @@ describe 'karma environment', ->
         it 'should not have access to instance variables', ->
           expect(dsl._tests).not.to.exist
 
+        describe 'custom methods', ->
+          custom = null
+          customMethods = null
+          queue = null
+          dsl = null
+          test = null
+
+          beforeEach ->
+            queue = []
+            test = ''
+
+            customMethods =
+              foo: (environment) ->
+                test += 'foo'
+
+            injector.get('config').environments.customMethods = customMethods
+            dsl = karmaEnv._newDsl(queue)
+            custom = dsl.foo
+
+          it 'should add custom methods to dsl', ->
+            expect(custom).to.be.instanceof Function
+
+          it 'should return the dsl', ->
+            expect(custom()).to.deep.equal dsl
+
+          it 'should add a callback to the queue', ->
+            expect(queue.length).to.equal 0
+            custom()
+            expect(queue[0]).to.be.instanceof Function
+
+          it 'should execute the custom method', (done) ->
+            custom()
+            karmaEnv._runQueue(queue).then ->
+              expect(test).to.equal 'foo'
+              done()
+
+          it 'should use _call to execute custom methods', (done) ->
+            karmaEnv._call = sinon.spy()
+            custom()
+            karmaEnv._runQueue(queue).then ->
+              expect(karmaEnv._call).to.have.been.called
+              done()
+
+          it 'should dependency inject arguments', (done) ->
+            testArgs = null
+            customMethods.bar = (args, environment) ->
+              testArgs = args
+
+            karmaEnv._newDsl(queue).bar('lorem')
+            karmaEnv._runQueue(queue).then ->
+              expect(testArgs[0]).to.equal 'lorem'
+              done()
+
       describe 'clean', ->
         it 'should reset frameworks and environment', (done) ->
           karmaEnv._frameworks = ['asdf']

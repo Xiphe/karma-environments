@@ -14,4 +14,5 @@ module.exports =
   DEFAULTS:
     definitions: ['**/.karma.env.+(js|coffee)']
     tests: ['**/*Spec.+(coffee|js)', '**/test.*.+(js|coffee)']
-    asyncTimeout: 5000
+    asyncTimeout: 5000,
+    customMethods: {}
