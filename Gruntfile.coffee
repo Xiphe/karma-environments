@@ -2,6 +2,8 @@ module.exports = (grunt) ->
 
   grunt.initConfig
 
+    pkg: grunt.file.readJSON 'package.json'
+
     simplemocha:
       options:
         ui: 'bdd'
@@ -24,7 +26,33 @@ module.exports = (grunt) ->
         files: ['lib/**/*.coffee', 'test/**/*.coffee']
         tasks: ['test']
 
+    bump:
+      options:
+        updateConfigs: ['pkg']
+        commitFiles: ['package.json']
+        commitMessage: 'release v%VERSION%'
+        pushTo: 'origin'
+
+    'npm-publish':
+      options:
+        requires: ['test']
+        abortIfDirty: true
+        tag: 'latest'
+
+    'npm-contributors':
+      options:
+        commitMessage: 'Update contributors'
+
   # Load grunt tasks from NPM packages
   require('load-grunt-tasks') grunt
 
   grunt.registerTask 'test', ['simplemocha:unit', 'shell:runkarma']
+
+  grunt.registerTask 'release', 'Build, bump and publish to NPM.', (type) ->
+    grunt.task.run [
+      'npm-contributors'
+      "bump:#{type||'patch'}:bump-only"
+      'test'
+      'bump-commit'
+      'npm-publish'
+    ]

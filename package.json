@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Run multiple test suites in one karma process.",
   "main": "lib/index.coffee",
+  "bin": {},
   "directories": {
     "test": "test"
   },
@@ -14,10 +15,15 @@
     "url": "git://github.com/Xiphe/karma-environments.git"
   },
   "keywords": [
-    "karma-plugin",
+    "karma",
+    "plugin",
+    "runner",
+    "test",
+    "multiple",
     "multi-suite"
   ],
   "author": "Hannes Diercks <hannes.diercks@jimdo.com>",
+  "contributors": [],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Xiphe/karma-environments/issues"
@@ -36,7 +42,7 @@
     "minimatch": "~0.2.14",
     "lodash": "~2.4.1",
     "qunitjs": "~1.12.0",
-    "karma-qunit": "~0.1.1",
+    "karma": "~0.10.9",
     "coffee-script": "~1.7.1",
     "coffee-errors": "~0.8.6",
     "temp": "~0.7.0"
@@ -47,6 +53,9 @@
     "sinon-chai": "~2.5.0",
     "chai-as-promised": "~4.1.1",
     "grunt-contrib-watch": "~0.6.0",
-    "proxyquire": "~0.5.3"
+    "proxyquire": "~0.5.3",
+    "grunt-npm": "0.0.2",
+    "karma-qunit": "~0.1.1",
+    "grunt-bump": "0.0.13"
   }
 }
