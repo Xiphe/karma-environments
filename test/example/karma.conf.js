@@ -30,6 +30,9 @@ module.exports = function(config) {
             environment.add(args[0] + 'Lib.js');
             setTimeout(done, 100);
         }
+      },
+      customPaths: {
+        jasmine: path.join(basepath, 'test/example/jasmineEnv')
       }
     },
 

@@ -417,6 +417,52 @@ describe 'karma environment', ->
           expect(error.message).to.equal "Timed out while waiting for done() to be called in 'foo'"
           done()
 
+    describe '_getPathHelper', ->
+      helper = null
+
+      beforeEach ->
+        karmaEnv._basePath = '/envPath'
+        helper = karmaEnv._getPathHelper()
+
+      it 'should be a function', ->
+        expect(helper).to.be.instanceof Function
+
+      it 'should return the DEFAULT_PATH', ->
+        expect(helper()).to.equal '/envPath'
+
+      it 'should be able to add a subpath to DEFAULT_PATH', ->
+        expect(helper('my/dir')).to.equal '/envPath/my/dir'
+
+      it 'should be usable as a string', ->
+        expect("cwd is #{helper}").to.equal "cwd is /envPath"
+
+      it 'should have a root method', ->
+        expect(helper.root()).to.equal '/'
+
+      it 'should have a root method that is usable as a string', ->
+        expect("root is #{helper.root}").to.equal "root is /"
+
+      it 'should have a root method that is able to add a subpath to root', ->
+        expect(helper.root('my/dir')).to.equal '/my/dir'
+
+      describe 'custom path helpers', ->
+        beforeEach ->
+          karmaEnv._pathHelper = null
+          injector.get('config').environments.customPaths =
+            foo: '/bar/baz'
+          helper = karmaEnv._getPathHelper()
+
+        it 'should have a foo method', ->
+          expect(helper.foo).to.be.instanceof Function
+
+        it 'should return the defined path', ->
+          expect(helper.foo()).to.equal '/bar/baz'
+
+        it 'should be able to add a subpath to defined path', ->
+          expect(helper.foo('lorem.js')).to.equal '/bar/baz/lorem.js'
+
+        it 'should be usable as a string', ->
+          expect("foo is #{helper.foo}").to.equal 'foo is /bar/baz'
 
     describe 'DSL', ->
       dsl = null

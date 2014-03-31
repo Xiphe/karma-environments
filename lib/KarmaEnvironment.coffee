@@ -28,6 +28,16 @@ DSL_METHODS = [
 ]
 
 ###*
+ * Default paths for path helper object.
+ * @const
+ * @type {Object}
+###
+DEFAULT_PATHS =
+  root: '/'
+  home: '~/'
+  process: process.cwd()
+
+###*
  * KarmaEnvironment Class
 ###
 class KarmaEnvironment extends Base
@@ -116,6 +126,14 @@ class KarmaEnvironment extends Base
     @_parent = false
 
     ###*
+     * An object containing String/Function hybrids for simple
+     * path prefixing.
+     * Initiated in _getPathHelper()
+     * @type {Object}
+    ###
+    @_pathHelper = null
+
+    ###*
      * All test files
      * Disable by setting _dontSearchTests to true
      * Auto-searched using config.environments.tests
@@ -200,7 +218,7 @@ class KarmaEnvironment extends Base
           if lib instanceof Function
             @_prepareSnippet lib, d.resolve, d.reject
           else
-            @_addFile lib, prefix, d.resolve, d.reject
+            @_addFile lib, "#{prefix}", d.resolve, d.reject
           return d.promise
 
       if i == libs.length - 1
@@ -470,6 +488,7 @@ class KarmaEnvironment extends Base
 
     return _.extend additional,
       environment: ['value', @_newDsl(queue)]
+      path: ['value', @_getPathHelper()]
       error: ['value', error]
       done: ['value', done]
 
@@ -511,6 +530,35 @@ class KarmaEnvironment extends Base
           dsl
 
     dsl
+
+  ###*
+   * Build an get a path helper object for dependency injection into
+   * functions executed by _call().
+   * Including custom paths from configuration.
+   * @return {Function}
+  ###
+  _getPathHelper: () ->
+    return @_pathHelper if @_pathHelper
+
+    @_pathHelper = (subPath = '') =>
+      return path.join @_basePath, subPath
+    @_pathHelper.toString = => @_pathHelper()
+
+    @_createPathHybrid alias, target for alias, target of DEFAULT_PATHS
+    @_createPathHybrid alias, target for alias, target of @config.environments.customPaths
+
+    return @_pathHelper
+
+  ###*
+   * Add a new String/Function hybrid to the path helper
+   * @param  {String} alias
+   * @param  {String} target
+   * @return {void}
+  ###
+  _createPathHybrid: (alias, target) ->
+    @_pathHelper[alias] = (subPath = '') -> path.join target, subPath
+    @_pathHelper[alias].toString = => @_pathHelper[alias]()
+
 
   ###*
    * Capitalize the first letter of a string

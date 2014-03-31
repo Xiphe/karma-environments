@@ -16,3 +16,4 @@ module.exports =
     tests: ['**/*Spec.+(coffee|js)', '**/test.*.+(js|coffee)']
     asyncTimeout: 5000,
     customMethods: {}
+    customPaths: {}

@@ -22,7 +22,7 @@ The easiest way is to keep `karma-environments` as a devDependency in your `pack
 {
   "devDependencies": {
     "karma": "~0.10.9",
-    "karma-environments": "~0.0.2"
+    "karma-environments": "~0.0.3"
   }
 }
 ```
@@ -60,6 +60,9 @@ module.exports = function(config) {
         myLib: function(environment, args) {
           environment.add('my' + args[0] + 'Lib.js')
         }
+      },
+      customPath: {
+        myPath: '/home/hannes/my-custom-things'
       }
     },
 
@@ -83,11 +86,11 @@ dependency injection into following functions:
 Provided variables:
 
  * `environment` _(Object)_ - required! - The main environment DSL.
+ * `path` _(Object)_ A helper Object for easy prefixing of files and paths. See [path helper](#path-helper)
  * `done` _(Function)_ Callback to determine when asynchronous tasks are done.
    If it is required, it needs do be called within `config.environments.asyncTimeout` milliseconds.
  * `error` _(Function)_ If something went wrong, calling this fails the entire environment.
  * `args` _(Array)_ Only for custom methods, The arguments passed in method call.
-
 
 
 Environment Definition Files
@@ -245,6 +248,25 @@ You can add your own custom methods to the environment DSL.
 See [configuration](#configuration), [example definition](#example-definition) and [dependency injection](#dependency-injection).
 
 
+Path Helper
+-----------
+
+By using [dependency injection](#dependency-injection), we can use the `path` object for prefixing
+files we want to `.add()`
+
+```js
+// some/.karma.env.js
+module.exports = function(environment, path) {
+  /* Explicitly get a file from root */
+  environment.add(path.root('foo.js'))
+  /* Prefix multiple files */
+  .add(['a.js', 'b.js'], path.home);
+  /* Use custom path helpers defined in configuration */
+  .add(path.myPath + '/yes/it/uses/toString.js');
+}
+```
+
+
 Shout Out
 ---------
 
@@ -290,9 +312,7 @@ Todo
 ----
 
  * Normalize internal method naming
- * Customizable Path helper
  * Update to Karma 12
- * Travis etc
  * Check actuality of dependencies
  * Banner Definitions
 
