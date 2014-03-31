@@ -22,7 +22,7 @@ The easiest way is to keep `karma-environments` as a devDependency in your `pack
 {
   "devDependencies": {
     "karma": "~0.10.9",
-    "karma-environments": "~0.0.1"
+    "karma-environments": "~0.0.2"
   }
 }
 ```
