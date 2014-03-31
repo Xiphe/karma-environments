@@ -1,5 +1,5 @@
 describe 'base', ->
-  Q         = require 'Q'
+  Q         = require 'q'
   di        = require 'di'
   Base      = require lib 'Base'
   FakeClass = require fake 'Class'
@@ -16,7 +16,7 @@ describe 'base', ->
   describe 'Base', ->
     beforeEach ->
       injector = new di.Injector [
-        logger: ['type', require fake 'logger']
+        logger: ['type', require fake 'Logger']
         config: ['value', require fake 'config']
         constants: ['value', require lib 'constants']
         fake: ['type', FakeClass]

@@ -1,5 +1,5 @@
 describe 'karma environment', ->
-  Q                = require 'Q'
+  Q                = require 'q'
   di               = require 'di'
   proxyquire       = require 'proxyquire'
 

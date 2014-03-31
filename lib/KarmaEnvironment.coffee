@@ -6,7 +6,7 @@ temp      = require('temp').track()
 fs        = require 'fs'
 di        = require 'di'
 di_parse  = require('../node_modules/di/lib/annotation').parse
-Q         = require 'Q'
+Q         = require 'q'
 _         = require 'lodash'
 
 ###*

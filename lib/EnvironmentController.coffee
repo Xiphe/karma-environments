@@ -2,7 +2,7 @@ KarmaEnvironment = require './KarmaEnvironment'
 Base             = require './Base'
 glob             = require 'glob'
 path             = require 'path'
-Q                = require 'Q'
+Q                = require 'q'
 
 ###*
  * The caretaker for all our environments

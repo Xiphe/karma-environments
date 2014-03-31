@@ -1,6 +1,6 @@
 _                        = require 'lodash'
 fs                       = require 'fs'
-Q                        = require 'Q'
+Q                        = require 'q'
 Base                     = require './Base'
 path                     = require 'path'
 karmaDir                 = path.join process.cwd(), 'node_modules/karma'

@@ -1,4 +1,4 @@
-Q = require 'Q'
+Q = require 'q'
 
 class FakeController
   getEnvironmentsWithTests: -> [1,2,3]

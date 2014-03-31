@@ -1,5 +1,5 @@
 describe 'karma bridge', ->
-  Q          = require 'Q'
+  Q          = require 'q'
   _          = require 'lodash'
   di         = require 'di'
   path       = require 'path'
