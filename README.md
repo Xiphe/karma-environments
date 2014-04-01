@@ -1,6 +1,8 @@
 karma-environments
 ==================
 
+[![Build Status](https://travis-ci.org/Xiphe/karma-environments.svg?branch=v0.0.5)](https://travis-ci.org/Xiphe/karma-environments)
+
 > Run multiple test suites in one karma process.  
 > Watch multiple suites and execute only relevant ones on changes.
 
@@ -22,7 +24,7 @@ The easiest way is to keep `karma-environments` as a devDependency in your `pack
 {
   "devDependencies": {
     "karma": "~0.10.9",
-    "karma-environments": "~0.0.3"
+    "karma-environments": "~0.0.5"
   }
 }
 ```
