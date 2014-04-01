@@ -44,16 +44,10 @@ class KarmaBridge extends Base
 
     ###*
      * Statistics of all tests and environments
+     * Initiated in init() reset after print.
      * @type {Object}
     ###
-    @stats =
-      tests:
-        success: 0
-        failed: 0
-      environments:
-        success: 0
-        failed: 0
-        skipped: 0
+    @stats = null
 
     ###*
      * A list of all environment files we know
@@ -82,6 +76,7 @@ class KarmaBridge extends Base
    * @return {void}
   ###
   init: ->
+    @_resetStats()
     #* Disable single run and watching for now
     #* Well handle that later in startWatching() and runAll()
     @config.singleRun = false
@@ -91,6 +86,20 @@ class KarmaBridge extends Base
     @emitter.on 'run_complete', @runComplete
     @emitter.on 'file_list_modified', @fileListModified
     @emitter.on 'browser_register', @browserRegister
+
+  ###*
+   * Reset or initiate stats object.
+   * @return {Object} stats
+  ###
+  _resetStats: ->
+    @stats =
+      tests:
+        success: 0
+        failed: 0
+      environments:
+        success: 0
+        failed: 0
+        skipped: 0
 
   ###*
    * Apply the frameworks we want to use.
@@ -148,7 +157,6 @@ class KarmaBridge extends Base
     #* Execute
     @controller.runAll =>
       @lastRun = true
-      @config.singleRun = @originalSingleRun
     .then =>
       @startWatching() if andWatch
 
@@ -203,21 +211,21 @@ class KarmaBridge extends Base
    * @return {void}
   ###
   printStatInfo: ->
-    if not @originalAutoWatch
-      testsCount = @stats.tests.success + @stats.tests.failed
-      environmentCount = @stats.environments.success + @stats.environments.failed
-      totalEnvironments = @controller.getEnvironmentsWithTests().length
+    testsCount = @stats.tests.success + @stats.tests.failed
+    environmentCount = @stats.environments.success + @stats.environments.failed
+    totalEnvironments = @controller.getEnvironmentsWithTests().length
 
-      tests = "#{testsCount} Tests (#{@stats.tests.success} SUCCESS | " +
-        "#{@stats.tests.failed} FAILED)"
+    tests = "#{testsCount} Tests (#{@stats.tests.success} SUCCESS | " +
+      "#{@stats.tests.failed} FAILED)"
 
-      environments = "#{environmentCount} Environments " +
-        "(#{@stats.environments.success} SUCCESS | #{@stats.environments.failed} FAILED"
-      if totalEnvironments > environmentCount
-        environments += " | #{totalEnvironments - environmentCount} SKIPPED"
-      environments += ')'
+    environments = "#{environmentCount} Environments " +
+      "(#{@stats.environments.success} SUCCESS | #{@stats.environments.failed} FAILED"
+    if totalEnvironments > environmentCount
+      environments += " | #{totalEnvironments - environmentCount} SKIPPED"
+    environments += ')'
 
-      @logger.info "Total: #{tests} in #{environments}"
+    @logger.info "Total: #{tests} in #{environments}"
+    @_resetStats()
 
   ###*
    * See function name
@@ -225,6 +233,21 @@ class KarmaBridge extends Base
   ###
   fireDoneCallbacks: ->
     @_runQueue @doneCallbacks
+
+  ###*
+   * Silent exit suppressing the "browser disconnected" warnings.
+   * Copied from karma/lib/server.js
+   * @param  {Number} code exit code
+   * @return {void}
+  ###
+  disconnectBrowsers: (code = 1) ->
+    sockets = @socketServer.sockets.sockets
+    Object.getOwnPropertyNames(sockets).forEach (key) ->
+      sockets[key].removeAllListeners('disconnect');
+
+    @emitter.emitAsync('exit').then =>
+      @launcher.killAll ->
+        process.exit code
 
   ###*
    * An environment has finished now:
@@ -237,14 +260,16 @@ class KarmaBridge extends Base
    * @return {void}
   ###
   runComplete: (browsers, results) =>
-    if not @originalAutoWatch
-      @updateStats results
+    @updateStats results
 
     @allPassed = false if !results or !@allPassed or results.exitCode != 0
 
     if @lastRun
       results.exitCode = if @allPassed then 0 else 1
       @printStatInfo()
+      if @originalSingleRun
+        @doneCallbacks.push =>
+          @disconnectBrowsers(results.exitCode)
 
     @fireDoneCallbacks()
 
@@ -259,7 +284,7 @@ class KarmaBridge extends Base
       filesPromise.then (files) =>
         @lastRun = false
         @watching = false
-        @controller.runEnvironmentsByFile(@getLatestChange(files).originalPath).then =>
+        @controller.runEnvironmentsByFile(@getLatestChange(files).originalPath, => @lastRun = true).then =>
           @startWatching()
 
   ###*
@@ -269,16 +294,15 @@ class KarmaBridge extends Base
   ###
   browserRegister: (browser) =>
     #* Got to mark it as captured before we can check allCaptured.
-    if browser.launchId
-      @launcher.markCaptured browser.launchId
+    if browser.id
+      @launcher.markCaptured browser.id
 
     #* This will be the first set to kick off the tests.
     if @launcher.areAllCaptured()
       @runAll().catch (error) =>
         @logger.error error.toString() || error
-        @launcher.kill ->
-          process.exit(1)
+        @disconnectBrowsers(1)
 
 
-KarmaBridge.$inject = Base.$inject.concat ['controller', 'emitter', 'injector', 'launcher', 'fileList']
+KarmaBridge.$inject = Base.$inject.concat ['controller', 'emitter', 'injector', 'launcher', 'fileList', 'socketServer']
 module.exports = KarmaBridge

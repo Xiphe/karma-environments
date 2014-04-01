@@ -40,6 +40,7 @@ describe 'karma bridge', ->
         fileList: ['value', require fake 'fileList']
         emitter: ['type', require fake 'Emitter']
         launcher: ['type', require fake 'Launcher']
+        socketServer: ['type', require fake 'SocketServer']
       ]
       bridge = injector.instantiate KarmaBridge
 
@@ -199,6 +200,10 @@ describe 'karma bridge', ->
         expect(bridge.getLatestChange fileList).to.deep.equal fileList.foo[2]
 
     describe 'updateStats', ->
+
+      beforeEach ->
+        bridge._resetStats()
+
       it 'should increment internal counters about tests and environments', ->
         bridge.updateStats success: 3, failed: 2, exitCode: 1
         bridge.updateStats success: 6, failed: 0, exitCode: 0
@@ -210,16 +215,12 @@ describe 'karma bridge', ->
 
     describe 'printStatInfo', ->
       beforeEach ->
+        bridge._resetStats()
         bridge.logger.info = sinon.spy()
 
       it 'should log something', ->
         bridge.printStatInfo()
         expect(bridge.logger.info).to.have.been.called
-
-      it 'should not log when autoWatch is true', ->
-        bridge.originalAutoWatch = true
-        bridge.printStatInfo()
-        expect(bridge.logger.info).not.to.have.been.called
 
     describe 'fireDoneCallbacks', ->
       it 'should execute functions of doneCallbacks', (done) ->
@@ -231,16 +232,12 @@ describe 'karma bridge', ->
 
     describe 'runComplete', ->
       beforeEach ->
+        bridge._resetStats()
         bridge.updateStats = sinon.spy()
 
       it 'should call updateStats', ->
         bridge.runComplete()
         expect(bridge.updateStats).to.have.been.called
-
-      it 'should not call updateStats when we are watching', ->
-        bridge.originalAutoWatch = true
-        bridge.runComplete()
-        expect(bridge.updateStats).not.to.have.been.called
 
       it 'should leave allPassed true if we did not fail', ->
         bridge.runAll()
@@ -321,7 +318,7 @@ describe 'karma bridge', ->
 
       it 'should mark browsers as captured', ->
         launcher.markCaptured = sinon.spy()
-        bridge.browserRegister launchId: 'foo'
+        bridge.browserRegister id: 'foo'
         expect(launcher.markCaptured).to.have.been.calledWith 'foo'
 
       it 'should runAll when all browsers are captured', ->

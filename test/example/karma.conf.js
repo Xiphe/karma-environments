@@ -19,6 +19,10 @@ module.exports = function(config) {
     // frameworks to use
     frameworks: ['environments'],
 
+    preprocessors: {
+      '**/*.coffee': ['coffee']
+    },
+
     // list of files / patterns to load in the browser
     files: [],
 
@@ -27,8 +31,8 @@ module.exports = function(config) {
       definitions: ['**/.karma.env.+(js|coffee)'],
       customMethods: {
         lib: function(environment, args, done) {
-            environment.add(args[0] + 'Lib.js');
-            setTimeout(done, 100);
+          environment.add(args[0] + 'Lib.js');
+          setTimeout(done, 100);
         }
       },
       customPaths: {
@@ -41,7 +45,7 @@ module.exports = function(config) {
 
     // test results reporter to use
     // possible values: 'dots', 'progress', 'junit', 'growl', 'coverage'
-    reporters: ['progress'],
+    reporters: ['dots'],
 
     // web server port
     port: 9876,

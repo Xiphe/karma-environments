@@ -12,7 +12,7 @@ _(For example a backend JS App and some independent frontend snippets tested
 in qUnit and Jasmine)._
 
 
-### Tested with karma#0.10.9
+__Tested with karma#0.12.2__
 
 
 Installation
@@ -23,8 +23,8 @@ The easiest way is to keep `karma-environments` as a devDependency in your `pack
 ```json
 {
   "devDependencies": {
-    "karma": "~0.10.9",
-    "karma-environments": "~0.0.5"
+    "karma": "~0.12.2",
+    "karma-environments": "~0.1.0"
   }
 }
 ```
@@ -314,7 +314,6 @@ Todo
 ----
 
  * Normalize internal method naming
- * Update to Karma 12
  * Check actuality of dependencies
  * Banner Definitions
 

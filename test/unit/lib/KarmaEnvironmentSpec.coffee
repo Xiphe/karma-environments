@@ -162,7 +162,7 @@ describe 'karma environment', ->
           expect(karmaEnv._searchTests).to.have.been.called
           done()
 
-      it 'should call _call', ->
+      it 'should call _call', (done) ->
         karmaEnv._load().then ->
           expect(karmaEnv._call).to.have.been.called
           done()
