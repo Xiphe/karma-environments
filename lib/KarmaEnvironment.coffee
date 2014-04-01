@@ -218,7 +218,7 @@ class KarmaEnvironment extends Base
           if lib instanceof Function
             @_prepareSnippet lib, d.resolve, d.reject
           else
-            @_addFile lib, "#{prefix}", d.resolve, d.reject
+            @_addFile lib, prefix, d.resolve, d.reject
           return d.promise
 
       if i == libs.length - 1
@@ -396,6 +396,7 @@ class KarmaEnvironment extends Base
    * @return {void}
   ###
   _addFile: (file, prefix, done, error) ->
+    prefix = prefix() if typeof prefix == 'function'
     validPrefix = typeof prefix == 'string' and prefix.length
     variants = []
     if validPrefix
@@ -501,8 +502,8 @@ class KarmaEnvironment extends Base
     return if !@_parent
 
     @_parent.ready =>
-      @_frameworks = @_parent.getFrameworks()
-      @_environment = @_parent.getEnvironment()
+      @_frameworks = _.clone @_parent.getFrameworks()
+      @_environment = _.clone @_parent.getEnvironment()
 
   ###*
    * Create a new instance of our DSL object casting on a new queue

@@ -295,15 +295,33 @@ describe 'karma environment', ->
         karmaEnv._parent = false
         expect(karmaEnv._inherit()).not.to.exists
 
-      it 'should copy frameworks of parent', ->
-        karmaEnv._frameworks = ['lorem']
-        karmaEnv._inherit()
-        expect(karmaEnv._frameworks).to.deep.equal ['lorem']
+      it 'should copy frameworks of parent', (done) ->
+        parent._frameworks = ['lorem']
+        karmaEnv._inherit().then ->
+          expect(karmaEnv._frameworks).to.deep.equal ['lorem']
+          done()
 
-      it 'should copy environment of parent', ->
-        karmaEnv._environment = ['ipsum']
-        karmaEnv._inherit()
-        expect(karmaEnv._environment).to.deep.equal ['ipsum']
+      it 'should copy environment of parent', (done) ->
+        parent._environment = ['ipsum']
+        karmaEnv._inherit().then ->
+          expect(karmaEnv._environment).to.deep.equal ['ipsum']
+          done()
+
+      it 'should create a new copy of frameworks', (done) ->
+        parent._frameworks = ['lorem']
+        karmaEnv._inherit().then ->
+          karmaEnv._frameworks.push('ipsum')
+          expect(karmaEnv._frameworks.length).to.equal 2
+          expect(parent._frameworks.length).to.equal 1
+          done()
+
+      it 'should create a new copy of environment', (done) ->
+        parent._environment = ['ipsum']
+        karmaEnv._inherit().then ->
+          karmaEnv._environment.push('dolor')
+          expect(karmaEnv._environment.length).to.equal 2
+          expect(parent._environment.length).to.equal 1
+          done()
 
 
     describe '_addFile', ->
