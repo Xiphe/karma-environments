@@ -7,6 +7,7 @@ module.exports = (grunt) ->
     simplemocha:
       options:
         ui: 'bdd'
+        grep: grunt.option('grep') || ''
         reporter: 'dot'
       unit:
         src: [

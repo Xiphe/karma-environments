@@ -452,7 +452,10 @@ class KarmaEnvironment extends Base
       injections = @_prepareCallInjections args, d, name, additional
       if injections
         injector = new di.Injector [injections]
-        injector.invoke funct
+        try
+          injector.invoke funct
+        catch e
+          d.reject new Error "'#{name}': #{e.toString()}"
 
     return d.promise
 
@@ -475,7 +478,8 @@ class KarmaEnvironment extends Base
 
     done = =>
       clearTimeout timeout
-      @_runQueue queue, d
+      if !d.promise.isRejected()
+        @_runQueue queue, d
 
     if 'environment' not in args
       return error new Error "Missing environment parameter for call in '#{name}'"
@@ -579,7 +583,7 @@ class KarmaEnvironment extends Base
       => @_call require(@_definitionFile), @_name
       => @_searchTests()
       => @_readyDeferred.resolve()
-    ]
+    ], @_readyDeferred
     @_readyDeferred.promise
 
   ###*

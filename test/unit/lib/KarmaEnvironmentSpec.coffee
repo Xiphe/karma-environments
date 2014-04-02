@@ -137,6 +137,7 @@ describe 'karma environment', ->
         expect(karmaEnv.ready().then).to.be.instanceof Function
 
       it 'it should execute a callback when ready', (done) ->
+        karmaEnv._definitionFile = 'envDefinition'
         karmaEnv.ready done
         karmaEnv._call = sinon.spy()
         karmaEnv._searchTests = sinon.spy()
