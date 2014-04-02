@@ -144,7 +144,7 @@ module.exports = function(environment) {
     })
 
     /* Call custom methods defined in karma.conf.js */
-    .maLib('foo');
+    .myLib('foo');
 };
 
 ```
