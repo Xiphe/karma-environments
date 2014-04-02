@@ -695,6 +695,40 @@ describe 'karma environment', ->
             expect(karmaEnv._environment).to.deep.equal ['some.js', '/tmp/foo.js', 'other.js']
             done()
 
+      describe 'remove', ->
+        it 'should have a remove method', ->
+          expect(dsl.remove).to.be.instanceof Function
+
+        it 'should remove a previously added lib', (done) ->
+          karmaEnv._environment.push 'foo.js'
+          karmaEnv._environment.push 'bar.js'
+          dsl.remove 'foo.js'
+          run ->
+            expect(karmaEnv._environment).to.deep.equal ['bar.js']
+            done()
+
+        it 'should remove multiple files', (done) ->
+          karmaEnv._environment.push 'foo.js'
+          karmaEnv._environment.push 'bar.js'
+          dsl.remove ['foo.js', 'bar.js']
+          run ->
+            expect(karmaEnv._environment.length).to.equal 0
+            done()
+
+        it 'should remove prefixed files', (done) ->
+          karmaEnv._environment.push 'foo/bar.js'
+          dsl.remove 'bar.js', 'foo'
+          run ->
+            expect(karmaEnv._environment.length).to.equal 0
+            done()
+
+        it 'should remove if we have a partial fit', (done) ->
+          karmaEnv._environment.push 'foo/bar.js'
+          dsl.remove 'oo/bar.js'
+          run ->
+            expect(karmaEnv._environment.length).to.equal 0
+            done()
+
       describe 'use', ->
         it 'should add a framework', (done) ->
           dsl.use 'my framework'

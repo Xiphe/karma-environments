@@ -24,7 +24,7 @@ The easiest way is to keep `karma-environments` as a devDependency in your `pack
 {
   "devDependencies": {
     "karma": "~0.12.2",
-    "karma-environments": "~0.1.0"
+    "karma-environments": "~0.1.1"
   }
 }
 ```
@@ -224,6 +224,9 @@ Leads to:
   jQuery('body').addClass('testFoo');
 })(jQuery);
 ```
+
+### .remove(_String|Array_ libraries[, _String_ prefix])
+Remove on or multiple previously added files.
 
 ### .call(_Function_ function)
 Execute a sub-call. Witch behaves exactly like the function that is exported by definition files.

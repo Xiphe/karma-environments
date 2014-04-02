@@ -4,3 +4,6 @@ describe 'nested Lib', ->
 
   it 'should also know lib from parent environment', ->
     expect(cookies).toBe 'mjummy'
+
+  it 'should not know a lib we removed', ->
+    expect(window.foo).toBeUndefined()

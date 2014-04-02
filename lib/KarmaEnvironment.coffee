@@ -23,6 +23,7 @@ DSL_METHODS = [
   'name'
   'notests'
   'add'
+  'remove'
   'use'
   'call'
 ]
@@ -35,6 +36,7 @@ DSL_METHODS = [
 DEFAULT_PATHS =
   root: '/'
   home: '~/'
+  parent: '../'
   process: process.cwd()
 
 ###*
@@ -227,6 +229,25 @@ class KarmaEnvironment extends Base
     d.promise
 
   ###*
+   * Remove a file from environment.
+   * @param  {String|Array} removes
+   * @param  {String} prefix
+   * @return {void}
+  ###
+  dslRemove: (removes, prefix) ->
+    if (removes not instanceof Array)
+      removes = [removes]
+
+    @_environment = @_environment.filter (has) =>
+      for removebase in removes
+        for remove in @_getPossiblePaths removebase, prefix
+          if has.indexOf(remove) >= 0
+            @logger.debug "Remove '#{has}' from #{@_name}."
+            return false
+
+      return true
+
+  ###*
    * Set one or more frameworks to be used by karma
    * @param  {String|Array} frameworks
    * @return {KarmaEnvironment}
@@ -248,7 +269,8 @@ class KarmaEnvironment extends Base
     #* Quick return
     return if callback not instanceof Function
 
-    return @_call callback, "#{@_name}:call##{@_callCount++}"
+    @_call callback, "#{@_name}:call##{@_callCount++}"
+
 
   # INTERNAL
   # ========
@@ -387,15 +409,13 @@ class KarmaEnvironment extends Base
           done?()
 
   ###*
-   * Build expected locations for a file and
-   * try to add them to the environment.
-   * @param  {string}   file
-   * @param  {string}   prefix can be empty for no prefix
-   * @param  {Function} done
-   * @param  {Function} error
-   * @return {void}
+   * Build a list of possible locations of a file
+   * with or without a prefix
+   * @param  {String} file
+   * @param  {String|Function} prefix
+   * @return {Array}
   ###
-  _addFile: (file, prefix, done, error) ->
+  _getPossiblePaths: (file, prefix) ->
     prefix = prefix() if typeof prefix == 'function'
     validPrefix = typeof prefix == 'string' and prefix.length
     variants = []
@@ -406,6 +426,19 @@ class KarmaEnvironment extends Base
       variants.push path.join prefix, file
     variants.push file
 
+    return variants
+
+  ###*
+   * Get possible variants of a file/prefix combo and add the
+   * first one which is actually existing.
+   * @param  {string}   file
+   * @param  {string}   prefix can be empty for no prefix
+   * @param  {Function} done
+   * @param  {Function} error
+   * @return {void}
+  ###
+  _addFile: (file, prefix, done, error) ->
+    variants = @_getPossiblePaths(file, prefix)
     @_getFirstExistant(variants).catch(error).then (file) =>
       @_environment.push file
       done()
