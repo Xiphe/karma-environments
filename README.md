@@ -121,7 +121,7 @@ module.exports = function(environment) {
   environment
     .name('My Environment')
     /* Disable this environment. */
-    // .deactivate()
+    // .disable()
     /* Disable all other environments. */
     // .focus()
     /* Add one or multiple frameworks */
@@ -169,7 +169,7 @@ Overwrite the default name of the environment (which is generated from it's path
 ### .activate()
 Activate the environment (It's active by default).
 
-### .deactivate()
+### .disable()
 Disable the environment
 
 ### .toggle([_Boolean_ onOff])
@@ -317,7 +317,7 @@ Todo
 ----
 
  * Normalize internal method naming
- * Check actuality of dependencies
+ * Auto-Check actuality of dependencies
  * Banner Definitions
 
 
