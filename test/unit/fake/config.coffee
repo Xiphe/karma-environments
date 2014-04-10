@@ -4,3 +4,4 @@ module.exports =
   environments:
     definitions: 'foobar'
     asyncTimeout: 20
+    pauseBetweenRuns: 0

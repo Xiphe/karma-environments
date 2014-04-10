@@ -1,2 +1,3 @@
+Q = require 'q'
 module.exports =
-  reload: ->
+  reload: -> Q.all []

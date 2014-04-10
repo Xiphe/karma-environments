@@ -57,6 +57,8 @@ module.exports = function(config) {
       tests: ['*Spec.+(coffee|js)', 'test.*.+(js|coffee)'],
       /* Timeout for asynchronous tasks. */
       asyncTimeout: 5000,
+      /* If you feel better with a delay between single environment runs, increase this value. */
+      pauseBetweenRuns: 0,
       /* Extend the environment object used in definition files. */
       customMethods: {
         myLib: function(environment, args) {

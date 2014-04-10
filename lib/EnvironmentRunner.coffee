@@ -25,10 +25,10 @@ class EnvironmentRunner extends Base
     @bridge.setFrameworks frameworks
 
     #* Load the environment into our browsers.
-    @fileList.reload @config.files.concat(@bridge.getPatterns environment), @config.exclude
+    @fileList.reload(@config.files.concat(@bridge.getPatterns environment), @config.exclude).then =>
 
-    #* And schedule the test run.
-    @executor.schedule()
+      #* And schedule the test run.
+      setTimeout @executor.schedule, @config.environments.pauseBetweenRuns
 
 EnvironmentRunner.$inject = Base.$inject.concat ['bridge', 'executor', 'fileList']
 module.exports = EnvironmentRunner

@@ -358,8 +358,7 @@ class KarmaEnvironment extends Base
 
     d = Q.defer()
     @logger.info "Running \"#{@_name}\"."
-    @runner.run @_frameworks, @_environment.concat(@_tests), =>
-      setTimeout d.resolve, 0
+    @runner.run @_frameworks, @_environment.concat(@_tests), d.resolve
     d.promise
 
   ###*

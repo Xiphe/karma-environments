@@ -1,4 +1,5 @@
 describe 'environment runner', ->
+  Q                 = require 'q'
   di                = require 'di'
   EnvironmentRunner = require lib 'EnvironmentRunner'
 
@@ -39,18 +40,21 @@ describe 'environment runner', ->
 
       it 'should call fileList.reload', ->
         fileList = injector.get 'fileList'
-        fileList.reload = sinon.spy()
+        fileList.reload = sinon.stub().returns Q.all []
         runner.run [], ['myLib.js', 'myTest.coffee']
         expect(fileList.reload).to.have.been.called
         expect(fileList.reload.getCall(0).args[0]).to.deep.equal [
           'abc.js', 'myLib.js', 'myTest.coffee'
         ]
 
-      it 'should schedule the executor', ->
+      it 'should schedule the executor', (done) ->
         executor = injector.get 'executor'
         executor.schedule = sinon.spy()
         runner.run()
-        expect(executor.schedule).to.have.been.called
+        setTimeout =>
+          expect(executor.schedule).to.have.been.called
+          done()
+        , 5
 
       it 'should pass done callbacks to the bridge, if present', ->
         runner.run [], [], ->
