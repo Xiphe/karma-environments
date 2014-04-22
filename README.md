@@ -56,7 +56,7 @@ module.exports = function(config) {
       /* Matcher for test Files relative to definition files. */
       tests: ['*Spec.+(coffee|js)', 'test.*.+(js|coffee)'],
       /* Matcher for template files relative to definition files. */
-      templates: ['*Fixture.html', 'template.*.html']
+      templates: ['*Fixture.html', 'template*.html']
       /* Templates are wrapped with a div. Its class and id will use this prefix. */
       templateNamespace: 'ke-fixture'
       /* Timeout for asynchronous tasks. */
