@@ -29,6 +29,8 @@ module.exports = function(config) {
     environments: {
       tests: ['*Spec.+(coffee|js)', 'test.*.+(js|coffee)'],
       definitions: ['**/.karma.env.+(js|coffee)'],
+      templateNamespace: 'ke-fixture',
+      templates: ['*Fixture.html', 'template.*.html'],
       customMethods: {
         lib: function(environment, args, done) {
           environment.add(args[0] + 'Lib.js');

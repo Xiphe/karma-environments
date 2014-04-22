@@ -21,3 +21,6 @@ test('bar func', function() {
   equal(false, bar.lorem());
 });
 
+test('has template', function() {
+  ok(document.getElementById('ke-fixture') != null);
+});

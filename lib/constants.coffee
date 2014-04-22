@@ -14,6 +14,8 @@ module.exports =
   DEFAULTS:
     definitions: ['**/.karma.env.+(js|coffee)']
     tests: ['**/*Spec.+(coffee|js)', '**/test.*.+(js|coffee)']
+    templates: ['*Fixture.html', 'template.*.html']
+    templateNamespace: 'ke-fixture'
     asyncTimeout: 5000
     customMethods: {}
     pauseBetweenRuns: 0

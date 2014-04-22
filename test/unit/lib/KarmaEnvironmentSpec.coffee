@@ -11,6 +11,18 @@ describe 'karma environment', ->
     fs: fsStub
     temp: tempStub
 
+  setReaddir = (files) ->
+    fsStub.readdir = (dir, callback) ->
+      newFiles = []
+      files.forEach (path) ->
+        file = path.replace(dir, '')
+        if file.indexOf('/') > 0
+          newFiles.push "#{file.split('/')[0]}/"
+        else if path.indexOf(dir) >= 0
+          newFiles.push file
+
+      callback false, newFiles
+
   it 'should exist', ->
     expect(KarmaEnvironment).to.exist
 
@@ -141,6 +153,7 @@ describe 'karma environment', ->
         karmaEnv.ready done
         karmaEnv._call = sinon.spy()
         karmaEnv._searchTests = sinon.spy()
+        karmaEnv._addTemplates = sinon.spy()
         karmaEnv._load()
 
     describe '_ucfirst', ->
@@ -151,6 +164,7 @@ describe 'karma environment', ->
       beforeEach ->
         karmaEnv._call = sinon.stub().returns Q.all []
         karmaEnv._searchTests = sinon.stub().returns Q.all []
+        karmaEnv._addTemplates = sinon.stub().returns Q.all []
         karmaEnv._definitionFile = 'envDefinition'
 
       it 'should require the definition file and pass its function to call', (done) ->
@@ -172,27 +186,15 @@ describe 'karma environment', ->
         karmaEnv._readyDeferred.promise.then -> done()
         karmaEnv._load()
 
+    beforeEach ->
+      fsStub.lstat = (path, callback) ->
+        callback(false, isDirectory: -> path.charAt(path.length - 1) == '/')
+
     describe '_searchTests', ->
       it 'should disable itself if we do not search tests', ->
         karmaEnv.dslNotests()
         karmaEnv._searchTests()
         expect(karmaEnv.isActive()).to.equal false
-
-      setReaddir = (files) ->
-        fsStub.readdir = (dir, callback) ->
-          newFiles = []
-          files.forEach (path) ->
-            file = path.replace(dir, '')
-            if file.indexOf('/') > 0
-              newFiles.push "#{file.split('/')[0]}/"
-            else if path.indexOf(dir) >= 0
-              newFiles.push file
-
-          callback false, newFiles
-
-      beforeEach ->
-        fsStub.lstat = (path, callback) ->
-          callback(false, isDirectory: -> path.charAt(path.length - 1) == '/')
 
       it 'should add some tests',  ->
         files = ['fooSpec.js', 'barSpec.coffee']
@@ -237,6 +239,31 @@ describe 'karma environment', ->
         karmaEnv._searchTests().catch (error) ->
           expect(error.message).to.equal 'some other error'
           done()
+
+    describe '_addTemplates', ->
+      template = '<h1>My template</h1>'
+
+      beforeEach ->
+        fsStub.readFile = sinon.stub().callsArgWith(2, false, template)
+        karmaEnv._addTempfile = sinon.stub().callsArgWith 1, true
+
+      it 'should add a template setup file to the environment', (done) ->
+        setReaddir ['fooFixture.html']
+
+        karmaEnv._addTemplates().then ->
+          expect(karmaEnv._addTempfile).to.have.been.called
+          expect(karmaEnv._addTempfile.getCall(0).args[0]).to.contain template
+          done()
+
+      it 'should add a wrapper with and id to the template', (done) ->
+        setReaddir ['fooFixture.html', 'bar/bazFixture.html']
+
+        karmaEnv._addTemplates().then ->
+          expect(karmaEnv._addTempfile.getCall(0).args[0]).to.contain "document.createElement('div')"
+          expect(karmaEnv._addTempfile.getCall(0).args[0]).to.contain "template.setAttribute('id', 'ke-fixture')"
+          expect(karmaEnv._addTempfile.getCall(1).args[0]).to.contain "template.setAttribute('id', 'ke-fixture-bar')"
+          done()
+
 
     describe '_prepareSnippet', ->
       beforeEach ->

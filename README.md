@@ -55,6 +55,10 @@ module.exports = function(config) {
       definitions: ['**/.karma.env.+(js|coffee)'],
       /* Matcher for test Files relative to definition files. */
       tests: ['*Spec.+(coffee|js)', 'test.*.+(js|coffee)'],
+      /* Matcher for template files relative to definition files. */
+      templates: ['*Fixture.html', 'template.*.html']
+      /* Templates are wrapped with a div. Its class and id will use this prefix. */
+      templateNamespace: 'ke-fixture'
       /* Timeout for asynchronous tasks. */
       asyncTimeout: 5000,
       /* If you feel better with a delay between single environment runs, increase this value. */

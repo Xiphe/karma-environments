@@ -144,6 +144,13 @@ class KarmaEnvironment extends Base
     @_tests = []
 
     ###*
+     * A list of template files for our tests
+     * Populated in _addTemplates
+     * @type {Array}
+    ###
+    @_templates = []
+
+    ###*
      * Ready deferred
      * @type {Object}
     ###
@@ -389,13 +396,23 @@ class KarmaEnvironment extends Base
    * Wrap a callback function into a self executing closure
    * Put that thing into a temp file that can be used by karma.
    * @param  {Function} func
-   * @return {String}
+   * @param {Function} done
+   * @param {Function} error
   ###
   _prepareSnippet: (func, done, error) ->
     args = "#{func}".match(/\(([^\)]*)\)/)[0]
+    @_addTempfile "(#{func})#{args};", done, error
 
+  ###*
+   * Put a string into a tempfile, assuming it is JavScript
+   * And add that file to our environment
+   * @param {String}   content
+   * @param {Function} done
+   * @param {Function} error
+  ###
+  _addTempfile: (content, done, error) ->
     file = temp.open suffix: '.js', (err, info) =>
-      fs.write info.fd, "(#{func})#{args};", undefined, undefined, (err) =>
+      fs.write info.fd, content, undefined, undefined, (err) =>
         if err
           error new Error(err)
           return
@@ -613,6 +630,7 @@ class KarmaEnvironment extends Base
   _load: ->
     @_runQueue [
       @_inherit
+      => @_addTemplates()
       => @_call require(@_definitionFile), @_name
       => @_searchTests()
       => @_readyDeferred.resolve()
@@ -623,20 +641,83 @@ class KarmaEnvironment extends Base
    * Search for test-files that use this environment.
    * @return {Array}
   ###
-  _searchTests: (currentPath = @_basePath) =>
+  _searchTests: (path = @_basePath) =>
     if @_dontSearchTests
       @dslDisable()
       return
 
+    @_searchRelative @config.environments.tests, @_tests, path
+
+  ###*
+   * Search for template files relative to this environments
+   * definition path and build a js file that is added to the
+   * environment.
+  ###
+  _addTemplates: ->
+    if @_dontSearchTests
+      return
+
+    queue = []
+    mainD = Q.defer()
+
+    @_searchRelative(@config.environments.templates, @_templates).then =>
+      @_templates.forEach (templateFile, i) =>
+        d = Q.defer()
+        queue.push d
+
+        namespace = @config.environments.templateNamespace
+
+        subnamespace = path.dirname(templateFile).replace(@_basePath, '')
+          .trim().replace(/^.$/g, '').toLowerCase().replace /[^a-z0-9-_]/g, '-'
+
+        if subnamespace.length && subnamespace[0] != '-'
+          subnamespace = "-#{subnamespace}"
+
+        fs.readFile templateFile, encoding: 'UTF8', (error, data) =>
+          if error
+            d.reject new Error error
+            return
+
+          data = data.replace "'", "\'"
+
+          templateSetup = "(function() {
+            var body = document.getElementsByTagName('body')[0];
+            var template = document.createElement('div');
+            template.setAttribute('id', '#{namespace}#{subnamespace}');
+            template.setAttribute('class', '#{namespace}');
+            template.innerHTML = '#{data}';
+            body.appendChild(template);
+          })();"
+
+          @_addTempfile templateSetup, d.resolve, d.reject
+
+      @_runQueue queue, mainD
+
+    mainD.promise
+
+  ###*
+   * Search files matching a given matcher, relative to the base path.
+   * Ignore sub folders with new envitonment definitions.
+   *
+   * @param  {Array}  matchers
+   * @param  {Array}  target
+   * @param  {String} currentPath
+   * @return {Object}             promise
+  ###
+  _searchRelative: (matchers, target, currentPath = @_basePath) =>
     d = Q.defer()
 
     #* Walk directory
     fs.readdir currentPath, (error, files) =>
       if error
-        d.reject new Error(error)
+        d.reject new Error error
         return
 
-      if (currentPath != @_basePath)
+      if files.length == 0
+        d.resolve()
+        return
+
+      if currentPath != @_basePath
         #* Stop walking if we can find a new definition in this folder.
         for matcher in @config.environments.definitions
           if minimatch.match(files, matcher, {}).length
@@ -655,13 +736,13 @@ class KarmaEnvironment extends Base
             return
 
           if stat.isDirectory()
-            subSearches.push @_searchTests fullPath
+            subSearches.push @_searchRelative matchers, target, fullPath
 
           else
             #* Add file if it matches our test matchers.
-            for matcher in @config.environments.tests
+            for matcher in matchers
               if minimatch file, matcher
-                @_tests.push fullPath
+                target.push fullPath
 
           if i == files.length - 1
             #* Wait for subdirectories to be done before resolving
