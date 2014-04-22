@@ -678,7 +678,7 @@ class KarmaEnvironment extends Base
             d.reject new Error error
             return
 
-          data = data.replace "'", "\'"
+          data = data.replace(/'/g, '\\\'').replace /\n/g, '\\n'
 
           templateSetup = "(function() {
             var body = document.getElementsByTagName('body')[0];
