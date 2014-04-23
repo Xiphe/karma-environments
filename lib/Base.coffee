@@ -1,5 +1,7 @@
 Q = require 'q'
 
+configCache = {}
+
 ###*
  * Common setup for all our classes.
  * Set dependencies as instance variables and
@@ -13,7 +15,7 @@ class Base
 
     #* Create a logger
     @logger = @logger.create "#{@constants.LOGGER_NAMESPACE}:#{@constructor.name}"
-    @__setup?()
+    @__setup()
 
   ###*
    * Execute a list of deferred objects with the option to fail on
@@ -35,6 +37,8 @@ class Base
    * @return {void}
   ###
   __setup: ->
+    return if @config.environments == configCache
+
     #* Ensure environment key is set in config
     if !@config.environments?
       @config.environments = {}
@@ -47,8 +51,7 @@ class Base
       else if deflt instanceof Array and @config.environments[key] not instanceof Array
         @config.environments[key] = [@config.environments[key]]
 
-    #* We want this method to only be executed once.
-    delete Base.prototype.__setup
+    configCache = @config.environments
 
 Base.$inject = ['logger', 'constants', 'config'];
 module.exports = Base

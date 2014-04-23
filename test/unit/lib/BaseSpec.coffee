@@ -11,8 +11,6 @@ describe 'base', ->
 
   injector = null
 
-  __setup = Base.prototype.__setup
-
   describe 'Base', ->
     beforeEach ->
       injector = new di.Injector [
@@ -27,13 +25,6 @@ describe 'base', ->
 
     it 'should have a setup method', ->
       expect(Base.prototype.__setup).to.exist
-
-    it 'should remove the setup method after initiation', ->
-      fixture = injector.instantiate Fixture
-      expect(Base.prototype.__setup).not.to.exist
-
-    it 'should have the setup method removed for future tests', ->
-      expect(Base.prototype.__setup).not.to.exist
 
     it 'should apply dependencies to our new instances.', ->
       fixture = injector.instantiate Fixture
@@ -104,21 +95,34 @@ describe 'base', ->
 
     describe '__setup', ->
       fakeInstance = null
+      __setup = null
 
       beforeEach ->
+        __setup = Base.prototype.__setup
         fakeInstance =
           config: {}
           constants:
             DEFAULTS: {}
 
-      it 'should exist a copy of it', ->
-        expect(__setup).to.exist
+      it 'should not execute twice', ->
+        expect(__setup.call(fakeInstance)).to.be.instanceof Object
+        expect(__setup.call(fakeInstance)).to.equal undefined
 
-      it 'should set environment key into config', ->
+      it 'should execute twice if the configuration changed', ->
+        expect(__setup.call(fakeInstance)).to.be.instanceof Object
+        fakeInstance.config.environments = some: 'other object'
+        expect(__setup.call(fakeInstance)).to.be.instanceof Object
+
+      it 'should not execute twice if we manipulate the configuration', ->
+        expect(__setup.call(fakeInstance)).to.be.instanceof Object
+        fakeInstance.config.environments.foo = 'bar'
+        expect(__setup.call(fakeInstance)).to.equal undefined
+
+      it 'should set environment key into configuration', ->
         __setup.call(fakeInstance)
         expect(fakeInstance.config.environments).to.exist
 
-      it 'should apply defaults to config', ->
+      it 'should apply defaults to configuration', ->
         fakeInstance.constants.DEFAULTS.foo = 'bar'
         fakeInstance.constants.DEFAULTS.yo = ['lo']
         __setup.call(fakeInstance)
