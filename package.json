@@ -49,7 +49,6 @@
     "qunitjs": "~1.12.0",
     "grunt": "~0.4.4",
     "grunt-cli": "~0.1.13",
-    "grunt-shell": "~0.6.4",
     "grunt-contrib-watch": "~0.6.1",
     "grunt-simple-mocha": "~0.4.0",
     "grunt-npm": "0.0.2",
@@ -60,6 +59,7 @@
     "proxyquire": "~0.5.3",
     "sinon": "~1.9.0",
     "sinon-chai": "~2.5.0",
-    "chai-as-promised": "~4.1.1"
+    "chai-as-promised": "~4.1.1",
+    "grunt-karma": "~0.8.2"
   }
 }

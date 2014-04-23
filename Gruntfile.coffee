@@ -15,12 +15,9 @@ module.exports = (grunt) ->
           'test/unit/**/*Spec.coffee'
         ]
 
-    shell:
-      runkarma:
-        options:
-          stdout: true
-          stderr: true
-        command: 'node_modules/karma/bin/karma start test/example/karma.conf.js'
+    karma:
+      example:
+        configFile: 'test/example/karma.conf.js'
 
     watch:
       andtest:
@@ -47,7 +44,7 @@ module.exports = (grunt) ->
   # Load grunt tasks from NPM packages
   require('load-grunt-tasks') grunt
 
-  grunt.registerTask 'test', ['simplemocha:unit', 'shell:runkarma']
+  grunt.registerTask 'test', ['simplemocha:unit', 'karma:example']
 
   grunt.registerTask 'release', 'Build, bump and publish to NPM.', (type) ->
     grunt.task.run [
