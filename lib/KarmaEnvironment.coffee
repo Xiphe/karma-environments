@@ -667,8 +667,8 @@ class KarmaEnvironment extends Base
 
         namespace = @config.environments.templateNamespace
 
-        subnamespace = path.dirname(templateFile).replace(@_basePath, '')
-          .trim().replace(/^.$/g, '').toLowerCase().replace /[^a-z0-9-_]/g, '-'
+        subnamespace = templateFile.replace(@_basePath, '').replace(/\.html$/g, '')
+          .trim().replace(/^\.$/g, '').toLowerCase().replace /[^a-z0-9-_]/g, '-'
 
         if subnamespace.length && subnamespace[0] != '-'
           subnamespace = "-#{subnamespace}"
@@ -684,7 +684,7 @@ class KarmaEnvironment extends Base
             var body = document.getElementsByTagName('body')[0];
             var template = document.createElement('div');
             template.setAttribute('id', '#{namespace}#{subnamespace}');
-            template.setAttribute('class', '#{namespace}');
+            template.setAttribute('class', '#{namespace}-fixture');
             template.innerHTML = '#{data}';
             body.appendChild(template);
           })();"

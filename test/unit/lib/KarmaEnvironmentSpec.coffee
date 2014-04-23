@@ -255,13 +255,21 @@ describe 'karma environment', ->
           expect(karmaEnv._addTempfile.getCall(0).args[0]).to.contain template
           done()
 
+      it 'should add a wrapper with a class', (done) ->
+        setReaddir ['fooFixture.html']
+
+        karmaEnv._addTemplates().then ->
+          expect(karmaEnv._addTempfile.getCall(0).args[0]).to.contain "template.setAttribute('class', 'ke-fixture')"
+          done()
+
       it 'should add a wrapper with and id to the template', (done) ->
-        setReaddir ['fooFixture.html', 'bar/bazFixture.html']
+        setReaddir ['fooFixture.html', 'template.html', 'bar/bazFixture.html']
 
         karmaEnv._addTemplates().then ->
           expect(karmaEnv._addTempfile.getCall(0).args[0]).to.contain "document.createElement('div')"
-          expect(karmaEnv._addTempfile.getCall(0).args[0]).to.contain "template.setAttribute('id', 'ke-fixture')"
-          expect(karmaEnv._addTempfile.getCall(1).args[0]).to.contain "template.setAttribute('id', 'ke-fixture-bar')"
+          expect(karmaEnv._addTempfile.getCall(0).args[0]).to.contain "template.setAttribute('id', 'ke-foofixture')"
+          expect(karmaEnv._addTempfile.getCall(1).args[0]).to.contain "template.setAttribute('id', 'ke-template')"
+          expect(karmaEnv._addTempfile.getCall(2).args[0]).to.contain "template.setAttribute('id', 'ke-bar-bazfixture')"
           done()
 
 

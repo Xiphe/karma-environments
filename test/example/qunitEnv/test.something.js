@@ -22,5 +22,5 @@ test('bar func', function() {
 });
 
 test('has template', function() {
-  ok(document.getElementById('ke-fixture') != null);
+  ok(document.getElementById('ke-template') != null);
 });
