@@ -157,6 +157,7 @@ class KarmaBridge extends Base
     #* Execute
     @controller.runAll =>
       @lastRun = true
+      @config.singleRun = @originalSingleRun
     .then =>
       @startWatching() if andWatch
 
@@ -235,19 +236,45 @@ class KarmaBridge extends Base
     @_runQueue @doneCallbacks
 
   ###*
-   * Silent exit suppressing the "browser disconnected" warnings.
-   * Copied from karma/lib/server.js
+   * Dirty and shameless copy of karmas original
+   * disconnectBrowsers() (in karma/lib/server.js)
+   *
+   * Since we're disabling single run by default,
+   * karma won't quit naturally. We need to do this
+   * on our own.
+   *
    * @param  {Number} code exit code
    * @return {void}
   ###
   disconnectBrowsers: (code = 1) ->
+    #* Slightly hacky way of removing disconnect listeners
+    #* to suppress "browser disconnect" warnings
+    #* TODO(vojta): change the client to not send the event (if disconnected by purpose)
     sockets = @socketServer.sockets.sockets
     Object.getOwnPropertyNames(sockets).forEach (key) ->
-      sockets[key].removeAllListeners('disconnect');
+      sockets[key].removeAllListeners('disconnect')
+
+    removeAllListenersDone = false
+    removeAllListeners = =>
+      #* make sure we don't execute cleanup twice
+      return if removeAllListenersDone
+      removeAllListenersDone = true
+
+      @webServer.removeAllListeners()
+      #* Original function, removes process listeners here
+      #* We don't have access to the processWrapper.
+      @done code || 0
 
     @emitter.emitAsync('exit').then =>
-      @launcher.killAll ->
-        process.exit code
+      #* don't wait forever on webServer.close() because
+      #* pending client connections prevent it from closing.
+      closeTimeout = setTimeout removeAllListeners, 3000
+
+      #* shutdown the server...
+      @webServer.close =>
+        clearTimeout closeTimeout
+        removeAllListeners()
+
 
   ###*
    * An environment has finished now:
@@ -304,5 +331,14 @@ class KarmaBridge extends Base
         @disconnectBrowsers(1)
 
 
-KarmaBridge.$inject = Base.$inject.concat ['controller', 'emitter', 'injector', 'launcher', 'fileList', 'socketServer']
+KarmaBridge.$inject = Base.$inject.concat [
+  'controller',
+  'emitter',
+  'injector',
+  'launcher',
+  'fileList',
+  'socketServer',
+  'webServer',
+  'done'
+]
 module.exports = KarmaBridge

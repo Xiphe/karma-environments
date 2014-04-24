@@ -11,7 +11,8 @@ describe 'karma bridge', ->
   karmaDir    = path.join process.cwd(), 'node_modules/karma'
   watcherPath = path.join karmaDir, 'lib/watcher'
   configPath  = path.join karmaDir, 'lib/config'
-  stubs = {}
+  doneStub    = ->
+  stubs       = {}
   stubs[watcherPath] = watcherStub
   stubs[configPath] = configStub
   KarmaBridge = proxyquire.noCallThru() lib('KarmaBridge'), stubs
@@ -41,6 +42,8 @@ describe 'karma bridge', ->
         emitter: ['type', require fake 'Emitter']
         launcher: ['type', require fake 'Launcher']
         socketServer: ['type', require fake 'SocketServer']
+        webServer: ['type', require fake 'WebServer']
+        done: ['value', -> doneStub.apply doneStub, arguments]
       ]
       bridge = injector.instantiate KarmaBridge
 
