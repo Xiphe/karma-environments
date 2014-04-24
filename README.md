@@ -12,7 +12,7 @@ _(For example a backend JS App and some independent frontend snippets tested
 in qUnit and Jasmine)._
 
 
-__Tested with karma#0.12.2__
+__Tested with karma#0.12.10__
 
 
 Installation
@@ -23,8 +23,8 @@ The easiest way is to keep `karma-environments` as a devDependency in your `pack
 ```json
 {
   "devDependencies": {
-    "karma": "~0.12.2",
-    "karma-environments": "~0.1.1"
+    "karma": "~0.12.10",
+    "karma-environments": "~0.1.7"
   }
 }
 ```
