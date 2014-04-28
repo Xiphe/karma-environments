@@ -57,8 +57,10 @@ module.exports = (grunt) ->
   # Load grunt tasks from NPM packages
   require('load-grunt-tasks') grunt
 
+  grunt.registerTask 'build', ['peg:headerEnvironment']
+
   grunt.registerTask 'test', (suite) ->
-    grunt.task.run ['peg:headerEnvironment']
+    grunt.task.run ['build']
 
     if suite == 'parser'
       grunt.task.run ['simplemocha:parser']
@@ -68,7 +70,6 @@ module.exports = (grunt) ->
       grunt.task.run ['karma:example']
     else
       grunt.task.run ['simplemocha:parser', 'simplemocha:unit', 'karma:example']
-
 
   grunt.registerTask 'release', 'Build, bump and publish to NPM.', (type) ->
     grunt.task.run [
