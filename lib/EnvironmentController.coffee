@@ -109,10 +109,19 @@ class EnvironmentController extends Base
     for definition in @environmentDefinitions
       environment = @injector.instantiate KarmaEnvironment
       environment.addParent @getParentOf definition
+      environment.setAddChild @addEnvironment
       initiationPromises.push environment.initWithDefinition definition
-      @environments.push environment
+      @addEnvironment environment
 
     Q.all initiationPromises
+
+  ###*
+   * Add a new environment to the list of all environments
+   * Used for Child/Header environments
+   * @param {Object} environment
+  ###
+  addEnvironment: (environment) =>
+    @environments.push environment
 
   ###*
    * Get parent environment of a environment definition

@@ -12,7 +12,7 @@ _(For example a backend JS App and some independent frontend snippets tested
 in qUnit and Jasmine)._
 
 
-__Tested with karma#0.12.10__
+__Tested with karma#0.12.14__
 
 
 Installation
@@ -23,8 +23,8 @@ The easiest way is to keep `karma-environments` as a devDependency in your `pack
 ```json
 {
   "devDependencies": {
-    "karma": "~0.12.10",
-    "karma-environments": "~0.1.7"
+    "karma": "~0.12.14",
+    "karma-environments": "~0.1.8"
   }
 }
 ```
@@ -61,6 +61,8 @@ module.exports = function(config) {
       templateNamespace: 'ke'
       /* Timeout for asynchronous tasks. */
       asyncTimeout: 5000,
+      /* Set true if environments should also be definable inside header comments of test files. */
+      headerEnvironments: false,
       /* If you feel better with a delay between single environment runs, increase this value. */
       pauseBetweenRuns: 0,
       /* Extend the environment object used in definition files. */
@@ -160,6 +162,48 @@ module.exports = function(environment) {
 See [example tests](https://github.com/Xiphe/karma-environments/tree/master/test/example).
 
 
+Environment Definition Inside Test Files
+----------------------------------------
+
+If your environment has just one single test file, it feels a little much
+to add another file just to declare the dependencies of the test.
+CANT WE JUST ADD LIBRARIES IN THE TESTFILE ITSELF? - yup!
+_As long as you have at least one [Environment Definition File](#environment-definition-files)
+to declare the root of your testing folder_
+
+
+```js
+/* global foo */
+/**
+ * This is an example of an environment defined inside
+ * a comment inside a test file. (yo dawg)
+ *
+ * Karma Environment
+ *   # This line is ignored
+ *   #active: false
+ *   # Basically everything is a string
+ *   add: myAwesomeLib.js
+ *   # Pass multiple arguments to a method
+ *   add: myOtherLib.js | the/folder/of/the/other/lib
+ *   # false and true are converted to booleans
+ *   focus: true
+ *   # strings are split by comma so you can use arrays
+ *   use: jasmine, chai
+ * As soon as you break the indention level, the definition is done and
+ * you can write some additional comments.
+ */
+describe('myAwesomeLib', function() {
+  it('should exist', function() {
+    expect(window.myAwesomeLib).toBeDefined();
+  })
+});
+```
+
+You may already have noticed, this is not suitable for the more complex environment definition
+methods, such as [call](#callfunction-function) or [add](#addstringarrayfunction-libraries-string-prefix)
+with a closure. If you need them you should stick to [Environment Definition Files](#environment-definition-files).
+
+
 Environment DSL
 ---------------
 
@@ -178,8 +222,8 @@ Activate the environment (It's active by default).
 ### .disable()
 Disable the environment
 
-### .toggle([_Boolean_ onOff])
-Invert the activity or set it to passed state.
+### .active([_Boolean_ onOff])
+Set the activity to passed state (true by default).
 
 ### .focus()
 Disable all other environments, multiple environments can be focused at the same time.

@@ -2,11 +2,14 @@ describe 'karma environment', ->
   Q                = require 'q'
   di               = require 'di'
   proxyquire       = require 'proxyquire'
+  parser           = require lib 'headerEnvironmentParser/parser'
 
   envDefStub       = sinon.spy()
-  fsStub           = {}
+  fsStub           =
+    exists: (file, callback) -> callback(true)
   tempStub         = track: -> return tempStub
   KarmaEnvironment = proxyquire.noCallThru() lib('KarmaEnvironment'),
+    './headerEnvironmentParser/parser': parser
     envDefinition: envDefStub
     fs: fsStub
     temp: tempStub
@@ -23,12 +26,23 @@ describe 'karma environment', ->
 
       callback false, newFiles
 
+  setReadFile = (result) ->
+    fsStub.readFile = (file, options, callback) ->
+      callback null, result
+
   it 'should exist', ->
     expect(KarmaEnvironment).to.exist
 
   describe 'KarmaEnvironment', ->
     karmaEnv = null
     injector = null
+
+    stubLoad = ->
+      karmaEnv._call = sinon.stub().returns Q.all []
+      karmaEnv._searchTests = sinon.stub().returns Q.all []
+      karmaEnv._addTemplates = sinon.stub().returns Q.all []
+      karmaEnv._checkHeaderEnvironments = sinon.stub().returns Q.all []
+      karmaEnv._definitionFile = 'envDefinition'
 
     beforeEach ->
       injector = new di.Injector [
@@ -149,11 +163,8 @@ describe 'karma environment', ->
         expect(karmaEnv.ready().then).to.be.instanceof Function
 
       it 'it should execute a callback when ready', (done) ->
-        karmaEnv._definitionFile = 'envDefinition'
+        stubLoad()
         karmaEnv.ready done
-        karmaEnv._call = sinon.spy()
-        karmaEnv._searchTests = sinon.spy()
-        karmaEnv._addTemplates = sinon.spy()
         karmaEnv._load()
 
     describe '_ucfirst', ->
@@ -161,11 +172,7 @@ describe 'karma environment', ->
         expect(karmaEnv._ucfirst 'foo bar').to.equal 'Foo bar'
 
     describe '_load', ->
-      beforeEach ->
-        karmaEnv._call = sinon.stub().returns Q.all []
-        karmaEnv._searchTests = sinon.stub().returns Q.all []
-        karmaEnv._addTemplates = sinon.stub().returns Q.all []
-        karmaEnv._definitionFile = 'envDefinition'
+      beforeEach stubLoad
 
       it 'should require the definition file and pass its function to call', (done) ->
         karmaEnv._load().then ->
@@ -319,13 +326,13 @@ describe 'karma environment', ->
 
       beforeEach ->
         parent = injector.instantiate KarmaEnvironment
-        parent._readyDeferred.resolve()
+        parent._setupDeferred.resolve()
         karmaEnv._parent = parent
 
       it 'should wait for parent environment to be ready', ->
-        parent.ready = sinon.spy()
+        parent.setupDone = sinon.spy()
         karmaEnv._inherit()
-        expect(parent.ready).to.have.been.called
+        expect(parent.setupDone).to.have.been.called
 
       it 'should quick return if no parent is present', ->
         karmaEnv._parent = false
@@ -376,7 +383,10 @@ describe 'karma environment', ->
 
     describe '_getFirstExistant', ->
       beforeEach ->
-        fsStub.exists = sinon.stub().callsArgWith(1, false)
+        sinon.stub(fsStub, 'exists').callsArgWith(1, false)
+
+      afterEach ->
+        fsStub.exists.restore()
 
       it 'should call fs.exist for all files', ->
         karmaEnv._getFirstExistant ['a', 'b', 'c']
@@ -518,6 +528,149 @@ describe 'karma environment', ->
         it 'should be usable as a string', ->
           expect("foo is #{helper.foo}").to.equal 'foo is /bar/baz'
 
+    describe 'header environments', ->
+
+      beforeEach ->
+        karmaEnv.config.environments.headerEnvironments = true
+
+      it 'should call _checkHeaderEnvironments if activated', (done) ->
+        stubLoad()
+        karmaEnv._load().then ->
+          expect(karmaEnv._checkHeaderEnvironments).to.have.been.called
+          done()
+
+      it 'should do nothing if _dontSearchTests is true', ->
+        karmaEnv.dslNotests()
+        expect(karmaEnv._checkHeaderEnvironments()).to.equal undefined
+
+
+      describe 'with tests', ->
+        readFileSpy = null
+        tests = null
+
+        beforeEach ->
+          setReadFile '''
+            /* global foo */
+            /**
+             * Karma Environment
+             *   use: Foo
+             *   add: bar.js
+             */
+            jQuery(function($) { $('body').addClass('bar'); });
+          '''
+          tests = ['/foo/barSpec.js']
+          sinon.spy parser, 'parse'
+          sinon.spy fsStub, 'readFile'
+          readFileSpy = fsStub.readFile
+          karmaEnv._tests = ['/foo/barSpec.js']
+
+        afterEach ->
+          parser.parse.restore()
+
+        it 'should open the files in order to check the content', ->
+          karmaEnv._checkHeaderEnvironments()
+          expect(readFileSpy).to.have.been.called
+
+        it 'should call the parser with the environment definition', ->
+          karmaEnv._checkHeaderEnvironments()
+          expect(parser.parse).to.have.been.calledOnce
+          expect(parser.parse).to.have.been.calledWith '''
+          /**
+           * Karma Environment
+           *   use: Foo
+           *   add: bar.js
+           */
+          '''
+
+        it 'should not call the parser when no definition is present', ->
+          setReadFile '''
+            /* global jQuery */
+            jQuery(function($) { $('body').addClass('bar'); });
+          '''
+          karmaEnv._checkHeaderEnvironments()
+          expect(parser.parse).not.to.have.been.called
+
+        it 'should be able to find definitions in coffee files', ->
+          karmaEnv._tests = ['/foo/barSpec.coffee']
+          setReadFile '''
+            ###*
+             * Karma Environment
+             *   use: Foo
+             *   add: bar.js
+            ###
+            jQuery ($) -> $('body').addClass 'bar'
+          '''
+          karmaEnv._checkHeaderEnvironments()
+          expect(parser.parse).to.have.been.calledOnce
+          expect(parser.parse).to.have.been.calledWith '''
+          ###*
+           * Karma Environment
+           *   use: Foo
+           *   add: bar.js
+          ###
+          '''
+
+        describe 'Child Environment', ->
+          getChild = ->
+            karmaEnv._setupDeferred.resolve()
+            karmaEnv._checkHeaderEnvironments()
+            expect(karmaEnv._addChild).to.have.been.called
+            karmaEnv._addChild.getCall(0).args[0]
+
+          beforeEach ->
+            sinon.spy karmaEnv, '_addChild'
+
+          it 'should remove the test file from parent environment', ->
+            getChild().ready ->
+              expect(karmaEnv._tests).to.deep.equal []
+
+          it 'should call _addChild with a new Environment', ->
+            expect(getChild()).to.be.instanceof karmaEnv.constructor
+
+          it 'should know its test', (done) ->
+            child = getChild()
+            child.ready ->
+              expect(child._tests).to.deep.equal tests
+              done()
+
+          it 'should use the Foo framework', (done) ->
+            child = getChild()
+            child.ready ->
+              expect(child._frameworks).to.deep.equal ['Foo']
+              done()
+
+          it 'should try to add the path helper to add methods', (done) ->
+            sinon.stub fsStub, 'exists', (file, callback) -> callback file == '~/baz.js'
+            setReadFile '''
+              /**
+               * Karma Environment
+               *   add: baz.js | home
+               */
+            '''
+            child = getChild()
+            child.ready ->
+              expect(child._environment).to.deep.equal ['~/baz.js']
+              fsStub.exists.restore()
+              done()
+
+          it 'should throw an error if a method does not exist', (done) ->
+            setReadFile '''
+              /**
+               * Karma Environment
+               *   foo: bar
+               */
+            '''
+            getChild().ready().catch (e) ->
+              expect(e.message).to.equal "Environment method 'foo' does not exist in 'Foo Barspec'."
+              done()
+
+          it 'should generate its name with the testfile', (done) ->
+            child = getChild()
+            child.ready ->
+              expect(child._name).to.equal 'Foo Barspec'
+              done()
+
+
     describe 'DSL', ->
       dsl = null
       queue = null
@@ -646,31 +799,38 @@ describe 'karma environment', ->
             expect(karmaEnv._focus).to.equal true
             done()
 
-      describe 'toggle', ->
-        it 'should invert activity', (done) ->
-          expect(karmaEnv._active).to.equal true
-          dsl.toggle()
+      describe 'active', ->
+        it 'should default to true', (done) ->
+          karmaEnv._active = false
+          dsl.active()
           run ->
-            expect(karmaEnv._active).to.equal false
+            expect(karmaEnv._active).to.equal true
             done()
 
-        it 'should invert activity', (done) ->
+         it 'should stay active', (done) ->
           expect(karmaEnv._active).to.equal true
-          dsl.toggle().toggle()
+          dsl.active()
+          run ->
+            expect(karmaEnv._active).to.equal true
+            done()
+
+        it 'should stay active when called multiple times', (done) ->
+          expect(karmaEnv._active).to.equal true
+          dsl.active().active()
           run ->
             expect(karmaEnv._active).to.equal true
             done()
 
         it 'should stay true if truthy value is passed', (done) ->
           expect(karmaEnv._active).to.equal true
-          dsl.toggle 'asd'
+          dsl.active 'asd'
           run ->
             expect(karmaEnv._active).to.equal true
             done()
 
         it 'should get false if falsy value is passed', (done) ->
           expect(karmaEnv._active).to.equal true
-          dsl.toggle 0
+          dsl.active 0
           run ->
             expect(karmaEnv._active).to.equal false
             done()

@@ -8,6 +8,7 @@ di        = require 'di'
 di_parse  = require('../node_modules/di/lib/annotation').parse
 Q         = require 'q'
 _         = require 'lodash'
+heParser  = require './headerEnvironmentParser/parser'
 
 ###*
  * This methods will be exposed into environment definitions.
@@ -17,7 +18,7 @@ _         = require 'lodash'
 DSL_METHODS = [
   'activate'
   'disable'
-  'toggle'
+  'active'
   'focus'
   'clean'
   'name'
@@ -156,6 +157,11 @@ class KarmaEnvironment extends Base
     ###
     @_readyDeferred = Q.defer()
 
+    ###*
+     * Setup deferred
+     * @type {Object}
+    ###
+    @_setupDeferred = Q.defer()
 
   ###*
    * Forget about all frameworks and environment libraries
@@ -193,18 +199,18 @@ class KarmaEnvironment extends Base
     @_focus = true
 
   ###*
-   * Toggle activeness for this environment.
+   * Set activeness for this environment.
    * Does not bubble to sub-environments.
    * @param  {Boolean} onoff -optional
    * @return {KarmaEnvironment}
   ###
-  dslToggle: (onoff = !@_active) ->
+  dslActive: (onoff = true) ->
     @_active = !!onoff
   #* aliases for toggle
   dslActivate: ->
-    @dslToggle true
+    @dslActive true
   dslDisable: ->
-    @dslToggle false
+    @dslActive false
 
   ###*
    * Add one or more libraries to the environment
@@ -295,11 +301,51 @@ class KarmaEnvironment extends Base
     @_load()
 
   ###*
+   * Initiate this environment based on data we scraped
+   * out of a heading comment of a test file
+   * @param  {Array}  definitions
+   * @param  {String} testFile
+   * @return {object}            promise
+  ###
+  initWithParsedDefiniton: (definitions, testFile) ->
+    @_definitionFile = testFile
+    @_basePath = path.dirname testFile
+    @dslName @_generateName(true)
+    @dslNotests()
+    @_searchTests = ->
+      @_tests = [testFile]
+
+    @_applyDefinition = ->
+      @_call (environment, path, error) =>
+        for definition in definitions
+          method = definition[0]
+          args = definition[1]
+
+          if environment[method] not instanceof Function
+            error new Error "Environment method '#{method}' does not exist in '#{@_name}'."
+
+          if method == 'add' and args.length == 2 and typeof path[args[1]] != 'undefined'
+            args[1] = path[args[1]]
+
+          environment[method].apply environment, args
+      , @_name
+
+    @_load()
+
+
+  ###*
    * Add a parent environment for later inheritance
    * @param {Object} environment
   ###
   addParent: (environment) ->
     @_parent = environment
+
+  ###*
+   * Set the _addChild method
+   * @param {Function} method
+  ###
+  setAddChild: (method) ->
+    @_addChild = method
 
   ###*
    * Check if this is a parent of given path
@@ -320,6 +366,12 @@ class KarmaEnvironment extends Base
       @_readyDeferred.promise.then callback
 
     @_readyDeferred.promise
+
+  setupDone: (callback) =>
+    if callback instanceof Function
+      @_setupDeferred.promise.then callback
+
+    @_setupDeferred.promise
 
   ###*
    * Check if this environment has focus
@@ -381,14 +433,24 @@ class KarmaEnvironment extends Base
   # =========
 
   ###*
+   * Register a new child environment, created by this one
+   * Set by setAddChild
+  ###
+  _addChild: ->
+
+  ###*
    * Create a name for this environment using the relative
    * path of the folder we found this file in.
    * @return {String}
   ###
-  _generateName: () ->
-    dirname = path.dirname @_definitionFile.replace @config.basePath, ''
+  _generateName: (withFile = false) ->
+    relativeFile = @_definitionFile.replace @config.basePath, ''
+    if withFile
+      name = relativeFile.replace new RegExp("#{path.extname relativeFile}$"), ''
+    else
+      name = path.dirname relativeFile
 
-    dirname.split('/').map (token) =>
+    name.split('/').map (token) =>
       token = @_ucfirst token.toLowerCase()
     .join(' ').replace /^\s+|\s+$/g, ''
 
@@ -555,7 +617,7 @@ class KarmaEnvironment extends Base
   _inherit: =>
     return if !@_parent
 
-    @_parent.ready =>
+    @_parent.setupDone =>
       @_frameworks = _.clone @_parent.getFrameworks()
       @_environment = _.clone @_parent.getEnvironment()
 
@@ -631,11 +693,14 @@ class KarmaEnvironment extends Base
     @_runQueue [
       @_inherit
       => @_addTemplates()
-      => @_call require(@_definitionFile), @_name
+      => @_applyDefinition()
       => @_searchTests()
-      => @_readyDeferred.resolve()
-    ], @_readyDeferred
-    @_readyDeferred.promise
+      => @_setupDeferred.resolve()
+      => @_checkHeaderEnvironments() if @config.environments.headerEnvironments
+    ], @_readyDeferred, 'Foo'
+
+  _applyDefinition: ->
+    @_call require(@_definitionFile), @_name
 
   ###*
    * Search for test-files that use this environment.
@@ -750,6 +815,69 @@ class KarmaEnvironment extends Base
 
     d.promise
 
+  ###*
+   * Check all test files for environment definitions inside a comment.
+   * @see test/example/jasmineEnv/headerEnvironmentSpec.js
+   * @return {Object} promise
+  ###
+  _checkHeaderEnvironments: ->
+    return if @_dontSearchTests or !@_tests.length or !@config.environments.headerEnvironments
+    all = []
+
+    @_tests.forEach (test, i) =>
+      d = Q.defer()
+      all.push d.promise
+      fs.readFile test, encoding: 'UTF8', (error, content) =>
+        if error
+          d.reject new Error error
+
+        openingComment = '\\/\\*'
+        closingComment = '\\*\\/'
+        if path.extname(test) == '.coffee'
+          openingComment = '###\\*'
+          closingComment = '###'
+
+        someChars = "((?!#{closingComment})(.|[\\r\\n]))*"
+        definitionIndicator = 'Karma Environment'
+
+        definitionMatcher = new RegExp [
+            openingComment
+            someChars
+            definitionIndicator
+            someChars
+            closingComment
+          ].join(''), 'gi'
+
+        definition = content.match definitionMatcher
+        if !definition or !definition.length
+          d.resolve()
+          return
+
+        try
+          environment = heParser.parse definition[0]
+          child = @_createChildEnvironmentFromHeader environment, test
+          @_addChild child
+          child.ready().catch(d.reject).then =>
+            @_tests.splice i, 1
+            d.resolve()
+        catch error
+          d.reject new Error error
+
+    Q.all all
+
+  ###*
+   * Instantiate a new KarmaEnvironment and initiate it with given definition
+   * @param  {Array} definition
+   * @param  {String} test
+   * @return {Object}
+  ###
+  _createChildEnvironmentFromHeader: (definition, test) ->
+    childEnvironment = @injector.instantiate KarmaEnvironment
+    childEnvironment.addParent @
+    childEnvironment.initWithParsedDefiniton definition, test
+
+    childEnvironment
+
 #* Set the dependencies and export
-KarmaEnvironment.$inject = Base.$inject.concat ['runner']
+KarmaEnvironment.$inject = Base.$inject.concat ['runner', 'injector']
 module.exports = KarmaEnvironment

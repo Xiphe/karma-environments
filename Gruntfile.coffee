@@ -14,15 +14,28 @@ module.exports = (grunt) ->
           'test/unit/mocha-globals.coffee'
           'test/unit/**/*Spec.coffee'
         ]
+      parser:
+        src: [
+          'test/unit/mocha-globals.coffee'
+          'test/unit/**/headerEnvironmentParserSpec.coffee'
+        ]
+
+    peg:
+      headerEnvironment:
+        src: 'lib/headerEnvironmentParser/parser.pegjs'
+        dest: 'lib/headerEnvironmentParser/parser.js'
 
     karma:
       example:
         configFile: 'test/example/karma.conf.js'
 
     watch:
+      andtestparser:
+        files: ['lib/headerEnvironmentParser/*', 'test/**/*.coffee']
+        tasks: ['test:parser']
       andtest:
         files: ['lib/**/*.coffee', 'test/**/*.coffee']
-        tasks: ['test']
+        tasks: ['test:unit']
 
     bump:
       options:
@@ -44,7 +57,18 @@ module.exports = (grunt) ->
   # Load grunt tasks from NPM packages
   require('load-grunt-tasks') grunt
 
-  grunt.registerTask 'test', ['simplemocha:unit', 'karma:example']
+  grunt.registerTask 'test', (suite) ->
+    grunt.task.run ['peg:headerEnvironment']
+
+    if suite == 'parser'
+      grunt.task.run ['simplemocha:parser']
+    else if suite == 'unit'
+      grunt.task.run ['simplemocha:unit']
+    else if suite == 'karma'
+      grunt.task.run ['karma:example']
+    else
+      grunt.task.run ['simplemocha:parser', 'simplemocha:unit', 'karma:example']
+
 
   grunt.registerTask 'release', 'Build, bump and publish to NPM.', (type) ->
     grunt.task.run [

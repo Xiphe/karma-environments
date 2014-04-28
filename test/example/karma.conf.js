@@ -30,6 +30,7 @@ module.exports = function(config) {
       tests: ['*Spec.+(coffee|js)', 'test.*.+(js|coffee)'],
       definitions: ['**/.karma.env.+(js|coffee)'],
       templateNamespace: 'ke',
+      headerEnvironments: true,
       templates: ['*Fixture.html', 'template*.html'],
       customMethods: {
         lib: function(environment, args, done) {
@@ -38,7 +39,8 @@ module.exports = function(config) {
         }
       },
       customPaths: {
-        jasmine: path.join(basepath, 'test/example/jasmineEnv')
+        jasmine: path.join(basepath, 'test/example/jasmineEnv'),
+        qunit: path.join(basepath, 'test/example/qunitEnv')
       }
     },
 
