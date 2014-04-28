@@ -24,7 +24,7 @@ The easiest way is to keep `karma-environments` as a devDependency in your `pack
 {
   "devDependencies": {
     "karma": "~0.12.14",
-    "karma-environments": "~0.1.8"
+    "karma-environments": "~0.2.0"
   }
 }
 ```
