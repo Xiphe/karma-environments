@@ -23,7 +23,9 @@
     "multi-suite"
   ],
   "author": "Hannes Diercks <hannes.diercks@jimdo.com>",
-  "contributors": [],
+  "contributors": [
+    "Hannes Diercks <github@xiphe.net>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/Xiphe/karma-environments/issues"
