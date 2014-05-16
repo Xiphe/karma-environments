@@ -197,6 +197,17 @@ describe 'karma bridge', ->
           done()
         , 0
 
+      it 'should invoke the watcher only once', (done) ->
+        injector.invoke = sinon.spy()
+        bridge.startWatching()
+        setTimeout ->
+          bridge.startWatching()
+          setTimeout ->
+            expect(injector.invoke.getCalls().length).to.equal 1
+            done()
+          , 0
+        , 0
+
     describe 'getLatestChange', ->
       it 'should return the pattern with the latest mtime', ->
         fileList = getFileList()

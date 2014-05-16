@@ -64,6 +64,13 @@ class KarmaBridge extends Base
     ###
     @allPatternObjects = []
 
+    ###*
+     * Prevents the watcher from being invoked more than once
+     * @see startWatching
+     * @type {Boolean}
+    ###
+    @watcherInvoked = false
+
     #* Store original values of configuration parameters we'll manipulate later
     @originalSingleRun = @config.singleRun
     @originalAutoWatch = @config.autoWatch
@@ -167,13 +174,17 @@ class KarmaBridge extends Base
   ###
   startWatching: ->
     if @originalAutoWatch
+
       @originalAutoWatch = false
       @config.files = @config.files.concat @allPatternObjects
       @fileList.reload(@config.files, @config.exclude).then =>
         @originalAutoWatch = true
         @watching = true
-        @injector.invoke core_watcher.watch
         @logger.info 'Waiting for changes...'
+
+        if !@watcherInvoked
+          @watcherInvoked = true
+          @injector.invoke core_watcher.watch
 
   ###*
    * Search the latest modified file from the list
