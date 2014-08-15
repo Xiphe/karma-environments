@@ -879,6 +879,27 @@ describe 'karma environment', ->
             expect(karmaEnv._environment).to.deep.equal ['/tmp/foo.js']
             done()
 
+        it 'should inject additional variables if present', (done) ->
+          normalize = (input) ->
+            return input.replace(/\s+/g, ' ').replace(/^\w|\w$/g, '')
+
+          sinon.stub(karmaEnv, '_addTempfile').callsArg 1
+          myAddFunc = -> '{myString} bar {myString} {myOtherString}'
+
+          expectedStr = normalize """
+            (function () {
+              return 'foo bar foo lorem';
+            })();
+          """
+
+          dsl.add myAddFunc, myString: 'foo', myOtherString: 'lorem'
+
+          run ->
+            got = normalize karmaEnv._addTempfile.getCall(0).args[0]
+            expect(got).to.equal expectedStr
+            done()
+
+
         it 'should keep the order of libs added', (done) ->
           karmaEnv._prepareSnippet = (snippet, resolve) ->
             @_environment.push '/tmp/foo.js'

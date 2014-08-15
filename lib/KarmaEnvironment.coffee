@@ -231,6 +231,8 @@ class KarmaEnvironment extends Base
         queue.push =>
           d = Q.defer()
           if lib instanceof Function
+            if _.isObject prefix
+              lib.params = prefix
             @_prepareSnippet lib, d.resolve, d.reject
           else
             @_addFile lib, prefix, d.resolve, d.reject
@@ -463,7 +465,13 @@ class KarmaEnvironment extends Base
   ###
   _prepareSnippet: (func, done, error) ->
     args = "#{func}".match(/\(([^\)]*)\)/)[0]
-    @_addTempfile "(#{func})#{args};", done, error
+    funcStr = "#{func}"
+
+    if _.isObject func.params
+      _.each func.params, (value, key) ->
+        funcStr = funcStr.replace new RegExp("{#{key}}", 'g'), value
+
+    @_addTempfile "(#{funcStr})#{args};", done, error
 
   ###*
    * Put a string into a tempfile, assuming it is JavScript
