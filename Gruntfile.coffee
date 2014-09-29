@@ -54,6 +54,17 @@ module.exports = (grunt) ->
       options:
         commitMessage: 'Update contributors'
 
+    parallel:
+      test:
+        options:
+          grunt: true
+        tasks: [
+          'simplemocha:parser'
+          'simplemocha:unit'
+          'karma:example'
+        ]
+
+
   # Load grunt tasks from NPM packages
   require('load-grunt-tasks') grunt
 
@@ -69,7 +80,7 @@ module.exports = (grunt) ->
     else if suite == 'karma'
       grunt.task.run ['karma:example']
     else
-      grunt.task.run ['simplemocha:parser', 'simplemocha:unit', 'karma:example']
+      grunt.task.run ['parallel:test']
 
   grunt.registerTask 'release', 'Build, bump and publish to NPM.', (type) ->
     grunt.task.run [
