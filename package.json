@@ -1,6 +1,6 @@
 {
   "name": "karma-environments",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Run multiple test suites in one karma process.",
   "main": "lib/index.coffee",
   "bin": {},
