@@ -19,18 +19,6 @@ __Tested with karma#0.12.31__
 Installation
 ------------
 
-The easiest way is to keep `karma-environments` as a devDependency in your `package.json`.
-
-```json
-{
-  "devDependencies": {
-    "karma": "~0.12.21",
-    "karma-environments": "~0.2.7"
-  }
-}
-```
-
-You can simple do it by:
 ```bash
 npm install karma-environments --save-dev
 ```
