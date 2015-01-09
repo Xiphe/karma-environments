@@ -2,6 +2,7 @@ karma-environments
 ==================
 
 [![Build Status](https://travis-ci.org/Xiphe/karma-environments.svg?branch=v0.0.5)](https://travis-ci.org/Xiphe/karma-environments)
+[![Dependency Status](https://david-dm.org/Xiphe/karma-environments.svg)](https://david-dm.org/Xiphe/karma-environments)
 
 > Run multiple test suites in one karma process.  
 > Watch multiple suites and execute only relevant ones on changes.
@@ -12,7 +13,7 @@ _(For example a backend JS App and some independent frontend snippets tested
 in qUnit and Jasmine)._
 
 
-__Tested with karma#0.12.21__
+__Tested with karma#0.12.31__
 
 
 Installation
