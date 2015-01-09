@@ -14,4 +14,5 @@ describe 'tempLibs', ->
     expect(drrt).toEqual 'ipsummaeh'
 
 describe 'libs in call', ->
-  expect(cookies).toEqual 'mjummy'
+  it 'should know how cookies taste', ->
+    expect(cookies).toEqual 'mjummy'
