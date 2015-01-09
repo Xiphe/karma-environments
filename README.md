@@ -352,14 +352,6 @@ with the data of all environments in when we finished, but that might cause othe
 Issues, Discussion and PR are welcome.
 
 
-Todo
-----
-
- * Normalize internal method naming
- * Auto-Check actuality of dependencies
- * Banner Definitions
-
-
 License
 -------
 
