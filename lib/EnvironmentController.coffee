@@ -98,7 +98,7 @@ class EnvironmentController extends Base
   ###
   sortDefinitions: =>
     @environmentDefinitions.sort (a, b) ->
-      a.length > b.length
+      a.length - b.length
 
   ###*
    * Create the environment instances

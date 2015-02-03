@@ -107,9 +107,9 @@ describe 'environment controller', ->
 
     describe 'filter environments', ->
       it 'should sort environment definitions by name length', ->
-        envCtrl.environmentDefinitions = ['foo', 'lorem', 'a', 'bc']
+        envCtrl.environmentDefinitions = ['foo', 'bar', 'a', 'lorem', 'lorem', 'lorem', 'lorem', 'lorem', 'lorem', 'lorem', 'bc']
         envCtrl.sortDefinitions()
-        for name, i in ['a', 'bc', 'foo', 'lorem']
+        for name, i in ['a', 'bc', 'foo', 'bar', 'lorem', 'lorem', 'lorem', 'lorem', 'lorem', 'lorem', 'lorem']
           expect(envCtrl.environmentDefinitions[i]).to.equal name
 
       it 'should provide a list with environments containing a specific file', ->
