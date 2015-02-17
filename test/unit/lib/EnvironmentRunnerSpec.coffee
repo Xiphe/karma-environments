@@ -1,6 +1,7 @@
 describe 'environment runner', ->
   Q                 = require 'q'
   di                = require 'di'
+  path              = require 'path'
   EnvironmentRunner = require lib 'EnvironmentRunner'
 
   it 'should exist', ->
@@ -43,9 +44,17 @@ describe 'environment runner', ->
         fileList.reload = sinon.stub().returns Q.all []
         runner.run [], ['myLib.js', 'myTest.coffee']
         expect(fileList.reload).to.have.been.called
-        expect(fileList.reload.getCall(0).args[0]).to.deep.equal [
-          'abc.js', 'myLib.js', 'myTest.coffee'
-        ]
+        expect(fileList.reload.getCall(0).args[0]).to.contain 'abc.js'
+        expect(fileList.reload.getCall(0).args[0]).to.contain 'myLib.js'
+        expect(fileList.reload.getCall(0).args[0]).to.contain 'myTest.coffee'
+
+      it 'should add hook.js to env', ->
+        hookJs = path.resolve __dirname, '../../../lib/src/hook.js'
+        fileList = injector.get 'fileList'
+        fileList.reload = sinon.stub().returns Q.all []
+        runner.run [], []
+        expect(fileList.reload.getCall(0).args[0]).to.contain hookJs
+
 
       it 'should schedule the executor', (done) ->
         executor = injector.get 'executor'

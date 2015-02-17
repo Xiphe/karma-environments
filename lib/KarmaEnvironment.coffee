@@ -759,7 +759,13 @@ class KarmaEnvironment extends Base
             template.setAttribute('id', '#{namespace}#{subnamespace}');
             template.setAttribute('class', '#{namespace}-fixture');
             template.innerHTML = '#{data}';
-            body.appendChild(template);
+            var node = template.cloneNode(true);
+            body.appendChild(node);
+            karmaEnvironments.onTestDone(function() {
+              body.removeChild(node);
+              node = template.cloneNode(true);
+              body.appendChild(node);
+            });
           })();"
 
           @_addTempfile templateSetup, d.resolve, d.reject
