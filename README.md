@@ -128,8 +128,10 @@ module.exports = function(environment) {
     .add('foo.js')
     /* Add multiple things at once, and prefix all with a path. */
     .add(['lorem.js', 'ipsum.js'], 'blind/stuff')
-    /* Add a temporary JS snippet. */
-    .add(function(lorem) { lorem.setupTests(); })
+    /* Add a temporary JS snippet.
+       This is converted into a temp file and loaded with your tests
+       IMPORTANT: you have no access to closured variables here */
+    .add(function() { lorem.setupTests(); })
 
     /* Make a subcall for whatever asynchronous stuff you want to do :) */
     .call(function(environment, done) {
@@ -226,8 +228,8 @@ Do not search for or execute test files. Meaning this environment is just defini
 ### .use(_String|Array_ frameworks)
 Add one or multiple frameworks. See [Compatible Frameworks](#compatible-frameworks)
 
-### .add(_String|Array|Function_ libraries[, _String_ prefix])
-Add one or more libraries to the tests, optionally prefix them. The environm
+### .add(_String|Array|Function_ libraries[, _String_ prefix][, _Object_ replaces])
+Add one or more libraries to the tests, optionally prefix them. Environment
 Functions are wrapped into a closure and written into a temporary file witch is
 then served in tests.
 
@@ -250,19 +252,37 @@ environment.add(['myOtherLib.js', 'somethingElse.js'], '/home/me/foo')
 //               (...same for somethingElse.js)
 ```
 
-__Add Closure example__
+__Add Function example__
 ```js
-environment.add(function(jQuery) {
+environment.add(function() {
   jQuery('body').addClass('testFoo');
 });
 ```
 Leads to:
 ```js
 // /tmp/sometempfile.js
-(function(jQuery) {
+(function() {
   jQuery('body').addClass('testFoo');
-})(jQuery);
+})();
 ```
+
+__Add Function with str replace example__
+```js
+var foo = 'bar';
+environment.add(function() {
+  jQuery('body').addClass('{myReplaceKey}');
+}, {myReplaceKey: foo});
+```
+Leads to:
+```js
+// /tmp/sometempfile.js
+(function() {
+  jQuery('body').addClass('bar');
+})();
+```
+
+
+
 
 ### .remove(_String|Array_ libraries[, _String_ prefix])
 Remove on or multiple previously added files.
