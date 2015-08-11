@@ -513,6 +513,12 @@ class KarmaEnvironment extends Base
       variants.push path.join prefix, file
     variants.push file
 
+    if _.isArray @config.environments.importPaths
+      _.forEach @config.environments.importPaths, (importPath) ->
+        if validPrefix
+          variants.push path.join importPath, prefix, file
+        variants.push path.join importPath, file
+
     return variants
 
   ###*
@@ -893,5 +899,5 @@ class KarmaEnvironment extends Base
     childEnvironment
 
 #* Set the dependencies and export
-KarmaEnvironment.$inject = Base.$inject.concat ['runner', 'injector']
+KarmaEnvironment.$inject = Base.$inject.concat ['runner', 'injector', 'config']
 module.exports = KarmaEnvironment
