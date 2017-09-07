@@ -8,8 +8,8 @@
     "test": "test"
   },
   "scripts": {
-    "install": "$(which pegjs) lib/headerEnvironmentParser/parser.pegjs lib/headerEnvironmentParser/parser.js",
-    "test": "$(which grunt) test"
+    "install": "pegjs lib/headerEnvironmentParser/parser.pegjs",
+    "test": "grunt test"
   },
   "repository": {
     "type": "git",
@@ -40,7 +40,7 @@
     "glob": "~7.1.2",
     "lodash": "~4.17.4",
     "minimatch": "~3.0.4",
-    "pegjs": "~0.8.0",
+    "pegjs": "0.10.0",
     "q": "~1.5.0",
     "temp": "~0.8.3"
   },
